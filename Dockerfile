@@ -33,6 +33,4 @@ RUN uv sync --frozen --no-dev \
 
 EXPOSE 8137
 
-VOLUME ["/data/kb-data"]
-
 ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
