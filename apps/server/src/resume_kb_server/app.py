@@ -156,6 +156,14 @@ def create_app(
     prompts = PromptLibrary(settings.prompts_root)
     app = FastAPI(title="resumeKB")
 
+    if not settings.auth_disabled and (not settings.supabase_url or not settings.supabase_anon_key):
+        import logging
+
+        logging.getLogger("resume_kb_server").warning(
+            "Auth is enabled but Supabase is not configured. "
+            "Set SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_PUBLISHABLE_KEY)."
+        )
+
     get_current_user = make_get_current_user(settings)
 
     def get_user_store(user: AuthUser = Depends(get_current_user)) -> KBStore:

@@ -2,6 +2,7 @@ import {
   getAccessToken,
   getSession,
   initAuth,
+  isAuthReady,
   isAuthRequired,
   onAuthStateChange,
   signIn,
@@ -47,12 +48,20 @@ function updateDemoBanner() {
   banner.hidden = !state.appConfig || state.appConfig.extractor_backend !== "fake";
 }
 
+function setAuthFormEnabled(enabled) {
+  $("auth-email").disabled = !enabled;
+  $("auth-password").disabled = !enabled;
+  $("sign-in-btn").disabled = !enabled;
+  $("sign-up-btn").disabled = !enabled;
+}
+
 function showAuthPanel(message = "") {
   $("auth-panel").hidden = false;
   document.querySelector(".page").hidden = true;
   $("user-menu").hidden = true;
   $("admin-toggle").hidden = true;
   $("demo-banner").hidden = true;
+  setAuthFormEnabled(isAuthReady());
   const err = $("auth-error");
   if (message) {
     err.textContent = message;
@@ -609,6 +618,7 @@ async function init() {
     await loadPrompts();
   } catch (error) {
     showAuthPanel(error.message || "Failed to start the app.");
+    setAuthFormEnabled(false);
   }
 }
 

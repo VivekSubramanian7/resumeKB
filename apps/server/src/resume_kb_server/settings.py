@@ -8,7 +8,8 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()  # no-op if .env is absent; existing env vars win
+_REPO_ROOT = Path(__file__).resolve().parents[4]
+load_dotenv(_REPO_ROOT / ".env")  # repo-root .env; existing process env wins
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -16,6 +17,23 @@ def _env_bool(name: str, default: bool = False) -> bool:
     if raw is None:
         return default
     return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _normalize_supabase_url(url: str) -> str:
+    """Accept project URL only — strip accidental REST API suffixes."""
+    cleaned = url.strip().rstrip("/")
+    for suffix in ("/rest/v1", "/auth/v1"):
+        if cleaned.endswith(suffix):
+            cleaned = cleaned[: -len(suffix)].rstrip("/")
+    return cleaned
+
+
+def _env(name: str, *fallbacks: str, default: str = "") -> str:
+    for key in (name, *fallbacks):
+        value = os.environ.get(key)
+        if value is not None and value.strip():
+            return value.strip()
+    return default
 
 
 @dataclass
@@ -38,8 +56,11 @@ class Settings:
     )
     max_note_seconds: float = 120.0
     github_token: str | None = field(default_factory=lambda: os.environ.get("GITHUB_TOKEN"))
-    supabase_url: str = field(default_factory=lambda: os.environ.get("SUPABASE_URL", ""))
+    supabase_url: str = field(default_factory=lambda: _env("SUPABASE_URL"))
     supabase_anon_key: str = field(
-        default_factory=lambda: os.environ.get("SUPABASE_ANON_KEY", "")
+        default_factory=lambda: _env("SUPABASE_ANON_KEY", "SUPABASE_PUBLISHABLE_KEY")
     )
     auth_disabled: bool = field(default_factory=lambda: _env_bool("AUTH_DISABLED", False))
+
+    def __post_init__(self) -> None:
+        self.supabase_url = _normalize_supabase_url(self.supabase_url)
