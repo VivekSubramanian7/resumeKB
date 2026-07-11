@@ -1,6 +1,5 @@
 """Browser E2E: fake microphone feeds real speech WAV → recorder → server → KB list updates."""
 
-import shutil
 import threading
 import time
 
@@ -9,7 +8,7 @@ import uvicorn
 from playwright.sync_api import sync_playwright
 
 from resume_kb_server.app import create_app
-from resume_kb_server.settings import Settings
+from helpers import e2e_settings
 
 pytestmark = [pytest.mark.e2e, pytest.mark.browser, pytest.mark.transcription]
 
@@ -17,13 +16,10 @@ PORT = 8765
 
 
 @pytest.fixture()
-def live_server(tmp_path):
-    prompts_dir = tmp_path / "prompts"
-    shutil.copytree("prompts", prompts_dir)
-    settings = Settings(
-        kb_root=tmp_path / "kb",
+def live_server(tmp_path, prompts_dir):
+    settings = e2e_settings(
+        tmp_path,
         prompts_root=prompts_dir,
-        extractor_backend="fake",
         whisper_model="tiny",
         whisper_device="cpu",
         whisper_compute_type="int8",

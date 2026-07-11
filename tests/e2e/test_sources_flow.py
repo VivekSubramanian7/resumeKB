@@ -1,4 +1,3 @@
-import shutil
 import zipfile
 
 import pytest
@@ -7,18 +6,15 @@ from fastapi.testclient import TestClient
 from httpx import Response
 
 from resume_kb_server.app import create_app
-from resume_kb_server.settings import Settings
+from helpers import e2e_settings, user_kb_root
 
 pytestmark = pytest.mark.e2e
 GITHUB = "https://api.github.com"
 
 
 @pytest.fixture()
-def client(tmp_path):
-    prompts_dir = tmp_path / "prompts"
-    shutil.copytree("prompts", prompts_dir)
-    settings = Settings(kb_root=tmp_path / "kb", prompts_root=prompts_dir, extractor_backend="fake")
-    return TestClient(create_app(settings))
+def client(tmp_path, prompts_dir):
+    return TestClient(create_app(e2e_settings(tmp_path, prompts_root=prompts_dir)))
 
 
 @respx.mock
@@ -50,8 +46,8 @@ def test_github_ingest_end_to_end(client, tmp_path):
     response = client.post("/api/sources/github", json={"username": "vivek"})
     assert response.status_code == 200, response.text
     assert response.json()["repos"] == 1
-    assert (tmp_path / "kb" / "project" / "project-payments-svc.md").exists()
-    assert (tmp_path / "kb" / "skill" / "skill-python.md").exists()
+    assert (user_kb_root(tmp_path) / "project" / "project-payments-svc.md").exists()
+    assert (user_kb_root(tmp_path) / "skill" / "skill-python.md").exists()
 
 
 def test_linkedin_ingest_end_to_end(client, tmp_path):
@@ -67,8 +63,8 @@ def test_linkedin_ingest_end_to_end(client, tmp_path):
         response = client.post("/api/sources/linkedin", files={"export": ("export.zip", f)})
     assert response.status_code == 200, response.text
     assert response.json()["name"] == "Vivek Subramanian"
-    assert (tmp_path / "kb" / "person" / "person-vivek-subramanian.md").exists()
-    assert (tmp_path / "kb" / "skill" / "skill-go.md").exists()
+    assert (user_kb_root(tmp_path) / "person" / "person-vivek-subramanian.md").exists()
+    assert (user_kb_root(tmp_path) / "skill" / "skill-go.md").exists()
 
 
 def test_cross_source_merge(client, tmp_path):

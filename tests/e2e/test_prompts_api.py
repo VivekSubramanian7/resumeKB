@@ -1,10 +1,8 @@
-import shutil
-
 import pytest
 from fastapi.testclient import TestClient
 
 from resume_kb_server.app import create_app
-from resume_kb_server.settings import Settings
+from helpers import e2e_settings
 
 pytestmark = pytest.mark.e2e
 
@@ -22,14 +20,11 @@ class _RecordingExtractor:
 
 
 @pytest.fixture()
-def setup(tmp_path):
+def setup(tmp_path, prompts_dir):
     from resume_kb_server.fakes import build_fake_extractor
 
-    prompts_dir = tmp_path / "prompts"
-    shutil.copytree("prompts", prompts_dir)
-    settings = Settings(kb_root=tmp_path / "kb", prompts_root=prompts_dir, extractor_backend="fake")
     extractor = _RecordingExtractor(build_fake_extractor())
-    client = TestClient(create_app(settings, extractor=extractor))
+    client = TestClient(create_app(e2e_settings(tmp_path, prompts_root=prompts_dir), extractor=extractor))
     return client, extractor
 
 

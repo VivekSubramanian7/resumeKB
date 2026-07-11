@@ -17,12 +17,39 @@
       <h1 class="brand-title">resumeKB</h1>
       <p class="brand-tag">Voice-first professional memory</p>
     </div>
-    <button type="button" id="admin-toggle" class="admin-toggle" aria-pressed="false" aria-label="Toggle admin panel">
-      <span class="admin-toggle-label">Admin</span>
-    </button>
+    <div class="header-actions">
+      <div id="user-menu" class="user-menu" hidden>
+        <span id="user-email" class="user-email"></span>
+        <button type="button" id="sign-out-btn" class="sign-out-btn">Sign out</button>
+      </div>
+      <button type="button" id="admin-toggle" class="admin-toggle" hidden aria-pressed="false" aria-label="Toggle admin panel">
+        <span class="admin-toggle-label">Admin</span>
+      </button>
+    </div>
   </header>
+  <p id="demo-banner" class="demo-banner" hidden role="status">
+    Demo mode — extraction uses canned sample data and does not analyze your recordings.
+  </p>
 
-  <main class="page">
+  <section id="auth-panel" class="auth-panel" aria-labelledby="auth-heading">
+    <div class="auth-card">
+      <h2 id="auth-heading" class="auth-title">Sign in to your knowledge base</h2>
+      <p class="auth-lead">Each account has its own private KB on disk.</p>
+      <form id="auth-form" class="auth-form">
+        <label class="auth-label" for="auth-email">Email</label>
+        <input type="email" id="auth-email" class="auth-input" autocomplete="username" required>
+        <label class="auth-label" for="auth-password">Password</label>
+        <input type="password" id="auth-password" class="auth-input" autocomplete="current-password" required>
+        <p id="auth-error" class="auth-error" role="alert" hidden></p>
+        <div class="auth-actions">
+          <button type="submit" id="sign-in-btn" class="auth-btn auth-btn-primary">Sign in</button>
+          <button type="button" id="sign-up-btn" class="auth-btn auth-btn-secondary">Sign up</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <main class="page" hidden>
     <section class="panel recorder-hero" aria-labelledby="recorder-heading">
       <h2 id="recorder-heading" class="section-label">Record an update</h2>
       <div class="recorder-stage">

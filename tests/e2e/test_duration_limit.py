@@ -1,10 +1,8 @@
-import shutil
-
 import pytest
 from fastapi.testclient import TestClient
 
 from resume_kb_server.app import create_app
-from resume_kb_server.settings import Settings
+from helpers import e2e_settings
 
 pytestmark = pytest.mark.e2e
 
@@ -15,11 +13,10 @@ class _ExplodingTranscriber:
 
 
 @pytest.fixture()
-def client(tmp_path):
-    prompts_dir = tmp_path / "prompts"
-    shutil.copytree("prompts", prompts_dir)
-    settings = Settings(kb_root=tmp_path / "kb", prompts_root=prompts_dir, extractor_backend="fake")
-    return TestClient(create_app(settings, transcriber=_ExplodingTranscriber()))
+def client(tmp_path, prompts_dir):
+    return TestClient(
+        create_app(e2e_settings(tmp_path, prompts_root=prompts_dir), transcriber=_ExplodingTranscriber())
+    )
 
 
 def test_overlong_note_is_rejected_before_transcription(client, overlong_tone_wav):

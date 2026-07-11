@@ -1,3 +1,14 @@
+import {
+  getAccessToken,
+  getSession,
+  initAuth,
+  isAuthRequired,
+  onAuthStateChange,
+  signIn,
+  signOut,
+  signUp,
+} from "./auth.js";
+
 const MAX_SECONDS = 120;
 
 const $ = (id) => document.getElementById(id);
@@ -11,9 +22,105 @@ const state = {
   activeType: "",
   entries: [],
   searchMode: false,
+  appConfig: null,
 };
 
 const promptCache = {};
+
+async function apiFetch(url, options = {}) {
+  const headers = { ...(options.headers || {}) };
+  const token = await getAccessToken();
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const res = await fetch(url, { ...options, headers });
+  if (res.status === 401 && isAuthRequired()) {
+    await signOut();
+    showAuthPanel();
+  }
+  return res;
+}
+
+function updateDemoBanner() {
+  const banner = $("demo-banner");
+  if (!banner) return;
+  banner.hidden = !state.appConfig || state.appConfig.extractor_backend !== "fake";
+}
+
+function showAuthPanel(message = "") {
+  $("auth-panel").hidden = false;
+  document.querySelector(".page").hidden = true;
+  $("user-menu").hidden = true;
+  $("admin-toggle").hidden = true;
+  $("demo-banner").hidden = true;
+  const err = $("auth-error");
+  if (message) {
+    err.textContent = message;
+    err.hidden = false;
+  } else {
+    err.hidden = true;
+    err.textContent = "";
+  }
+}
+
+function showApp(session) {
+  $("auth-panel").hidden = true;
+  document.querySelector(".page").hidden = false;
+  $("admin-toggle").hidden = false;
+  updateDemoBanner();
+  if (isAuthRequired() && session?.user) {
+    $("user-email").textContent = session.user.email || "Signed in";
+    $("user-menu").hidden = false;
+  } else {
+    $("user-menu").hidden = true;
+  }
+}
+
+async function enterAuthenticatedApp() {
+  showApp(await getSession());
+  await loadEntries();
+  await loadPrompts();
+}
+
+function setAuthError(message) {
+  const err = $("auth-error");
+  err.textContent = message;
+  err.hidden = !message;
+}
+
+async function handleSignIn(event) {
+  event.preventDefault();
+  setAuthError("");
+  const email = $("auth-email").value.trim();
+  const password = $("auth-password").value;
+  try {
+    await signIn(email, password);
+    await enterAuthenticatedApp();
+  } catch (error) {
+    setAuthError(error.message || "Sign in failed.");
+  }
+}
+
+async function handleSignUp() {
+  setAuthError("");
+  const email = $("auth-email").value.trim();
+  const password = $("auth-password").value;
+  try {
+    const { session } = await signUp(email, password);
+    if (!session) {
+      setAuthError("Check your email to confirm your account, then sign in.");
+      return;
+    }
+    await enterAuthenticatedApp();
+  } catch (error) {
+    setAuthError(error.message || "Sign up failed.");
+  }
+}
+
+async function handleSignOut() {
+  await signOut();
+  showAuthPanel();
+}
 
 // --- Recorder ---
 
@@ -107,18 +214,18 @@ async function uploadRecording() {
   form.append("audio", blob, "note.webm");
 
   try {
-    const res = await fetch("/api/notes", { method: "POST", body: form });
+    const res = await apiFetch("/api/notes", { method: "POST", body: form });
     const data = await res.json();
     if (!res.ok) {
-      setStatus(data.detail || "Upload failed.");
+      setStatus(data.detail || "Upload failed.", "error");
       return;
     }
-    const count = data.entries?.length || 0;
-    setStatus(`Saved — ${count} knowledge base ${count === 1 ? "entry" : "entries"} updated.`);
     showTranscript(data.transcript);
+    notifyIngestResult(data);
     await loadEntries();
+    highlightChangedEntries(data.changes);
   } catch {
-    setStatus("Network error — could not upload recording.");
+    setStatus("Network error — could not upload recording.", "error");
   }
 }
 
@@ -128,8 +235,42 @@ function showTranscript(text) {
   el.hidden = false;
 }
 
-function setStatus(msg) {
-  $("status").textContent = msg;
+function setStatus(msg, kind = "") {
+  const el = $("status");
+  el.textContent = msg;
+  el.className = `status${kind ? ` status-${kind}` : ""}`;
+}
+
+function notifyIngestResult(data) {
+  const message = data.message || "Processing complete.";
+  const kind = data.extraction_mode === "fake" ? "warn" : data.kb_updated ? "success" : "warn";
+  setStatus(message, kind);
+}
+
+function highlightChangedEntries(changes = []) {
+  const touched = new Set(
+    changes.filter((c) => c.action === "created" || c.action === "updated").map((c) => c.slug),
+  );
+  document.querySelectorAll(".entry-item").forEach((btn) => {
+    const slug = btn.dataset.slug;
+    btn.classList.toggle("entry-new", slug && touched.has(slug));
+  });
+}
+
+function applySourceResult(card, data, fallbackError) {
+  if (!data) {
+    setSourceStatus(card, fallbackError, "error");
+    return;
+  }
+  const kind = data.extraction_mode === "fake" ? "warn" : data.kb_updated ? "success" : "warn";
+  setSourceStatus(card, data.message || "Processing complete.", kind);
+}
+
+async function loadAppConfig() {
+  const res = await fetch("/api/config");
+  const cfg = await res.json();
+  state.appConfig = cfg;
+  return cfg;
 }
 
 // --- Sources ---
@@ -148,14 +289,15 @@ async function uploadCV(file) {
   const form = new FormData();
   form.append("document", file);
   try {
-    const res = await fetch("/api/documents", { method: "POST", body: form });
+    const res = await apiFetch("/api/documents", { method: "POST", body: form });
     const data = await res.json();
     if (!res.ok) {
       setSourceStatus(card, data.detail || "Upload failed.", "error");
       return;
     }
-    setSourceStatus(card, `Imported ${data.name} — ${data.entries?.length || 0} entries.`, "success");
+    applySourceResult(card, data);
     await loadEntries();
+    highlightChangedEntries(data.changes);
   } catch {
     setSourceStatus(card, "Network error.", "error");
   } finally {
@@ -167,7 +309,7 @@ async function importGitHub(username) {
   const card = document.querySelector('[data-source="github"]');
   setSourceStatus(card, "Fetching profile…");
   try {
-    const res = await fetch("/api/sources/github", {
+    const res = await apiFetch("/api/sources/github", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username }),
@@ -177,12 +319,9 @@ async function importGitHub(username) {
       setSourceStatus(card, data.detail || "Import failed.", "error");
       return;
     }
-    setSourceStatus(
-      card,
-      `Imported @${data.username} — ${data.repos} repos, ${data.entries?.length || 0} entries.`,
-      "success",
-    );
+    applySourceResult(card, data);
     await loadEntries();
+    highlightChangedEntries(data.changes);
   } catch {
     setSourceStatus(card, "Network error.", "error");
   }
@@ -194,18 +333,15 @@ async function uploadLinkedIn(file) {
   const form = new FormData();
   form.append("export", file);
   try {
-    const res = await fetch("/api/sources/linkedin", { method: "POST", body: form });
+    const res = await apiFetch("/api/sources/linkedin", { method: "POST", body: form });
     const data = await res.json();
     if (!res.ok) {
       setSourceStatus(card, data.detail || "Upload failed.", "error");
       return;
     }
-    setSourceStatus(
-      card,
-      `Imported ${data.name || "profile"} — ${data.entries?.length || 0} entries.`,
-      "success",
-    );
+    applySourceResult(card, data);
     await loadEntries();
+    highlightChangedEntries(data.changes);
   } catch {
     setSourceStatus(card, "Network error.", "error");
   }
@@ -215,7 +351,10 @@ async function uploadLinkedIn(file) {
 
 async function loadEntries(type = state.activeType) {
   const url = type ? `/api/kb/entries?type=${encodeURIComponent(type)}` : "/api/kb/entries";
-  const res = await fetch(url);
+  const res = await apiFetch(url);
+  if (!res.ok) {
+    return;
+  }
   state.entries = await res.json();
   renderEntryList();
 }
@@ -239,6 +378,7 @@ function renderEntryList() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "entry-item";
+    btn.dataset.slug = entry.slug;
     btn.innerHTML = `<span class="entry-type-tag">${entry.entry_type}</span>${escapeHtml(entry.title)}`;
     btn.addEventListener("click", () => showEntry(entry.slug));
     li.appendChild(btn);
@@ -247,7 +387,7 @@ function renderEntryList() {
 }
 
 async function showEntry(slug) {
-  const res = await fetch(`/api/kb/entries/${encodeURIComponent(slug)}`);
+  const res = await apiFetch(`/api/kb/entries/${encodeURIComponent(slug)}`);
   if (!res.ok) return;
   const entry = await res.json();
   $("entry-title").textContent = entry.title;
@@ -274,7 +414,10 @@ async function searchEntries(query) {
     return;
   }
   state.searchMode = true;
-  const res = await fetch(`/api/kb/search?q=${encodeURIComponent(query)}`);
+  const res = await apiFetch(`/api/kb/search?q=${encodeURIComponent(query)}`);
+  if (!res.ok) {
+    return;
+  }
   const hits = await res.json();
   results.innerHTML = "";
   results.hidden = false;
@@ -307,13 +450,16 @@ async function searchEntries(query) {
 // --- Prompts (admin) ---
 
 async function loadPrompts() {
-  const res = await fetch("/api/prompts");
+  const res = await apiFetch("/api/prompts");
+  if (!res.ok) {
+    return;
+  }
   const data = await res.json();
   const select = $("prompt-select");
   select.innerHTML = "";
   await Promise.all(
     data.prompts.map(async (name) => {
-      const pr = await fetch(`/api/prompts/${encodeURIComponent(name)}`);
+      const pr = await apiFetch(`/api/prompts/${encodeURIComponent(name)}`);
       const pd = await pr.json();
       promptCache[name] = pd.content;
       const opt = document.createElement("option");
@@ -338,7 +484,7 @@ async function savePrompt() {
   const content = $("prompt-editor").value;
   const feedback = document.querySelector(".prompt-feedback");
   try {
-    const res = await fetch(`/api/prompts/${encodeURIComponent(name)}`, {
+    const res = await apiFetch(`/api/prompts/${encodeURIComponent(name)}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
@@ -426,12 +572,44 @@ function bindEvents() {
   $("admin-toggle").addEventListener("click", toggleAdmin);
   $("prompt-select").addEventListener("change", (e) => loadPromptContent(e.target.value));
   $("prompt-save-btn").addEventListener("click", savePrompt);
+  $("auth-form").addEventListener("submit", handleSignIn);
+  $("sign-up-btn").addEventListener("click", handleSignUp);
+  $("sign-out-btn").addEventListener("click", handleSignOut);
 }
 
 async function init() {
   bindEvents();
-  await loadEntries();
-  await loadPrompts();
+  try {
+    const cfg = await loadAppConfig();
+    await initAuth(cfg);
+
+    if (isAuthRequired()) {
+      onAuthStateChange(async (_event, session) => {
+        if (session) {
+          if (document.querySelector(".page").hidden) {
+            await enterAuthenticatedApp();
+          } else {
+            showApp(session);
+          }
+        } else {
+          showAuthPanel();
+        }
+      });
+      const session = await getSession();
+      if (!session) {
+        showAuthPanel();
+        return;
+      }
+      await enterAuthenticatedApp();
+      return;
+    }
+
+    showApp(null);
+    await loadEntries();
+    await loadPrompts();
+  } catch (error) {
+    showAuthPanel(error.message || "Failed to start the app.");
+  }
 }
 
 init();

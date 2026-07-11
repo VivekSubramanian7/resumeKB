@@ -11,9 +11,19 @@ from dotenv import load_dotenv
 load_dotenv()  # no-op if .env is absent; existing env vars win
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 @dataclass
 class Settings:
     kb_root: Path = field(default_factory=lambda: Path(os.environ.get("KB_ROOT", "./kb")))
+    kb_data_dir: Path = field(
+        default_factory=lambda: Path(os.environ.get("KB_DATA_DIR", "./kb-data"))
+    )
     prompts_root: Path = field(
         default_factory=lambda: Path(os.environ.get("PROMPTS_ROOT", "./prompts"))
     )
@@ -28,3 +38,8 @@ class Settings:
     )
     max_note_seconds: float = 120.0
     github_token: str | None = field(default_factory=lambda: os.environ.get("GITHUB_TOKEN"))
+    supabase_url: str = field(default_factory=lambda: os.environ.get("SUPABASE_URL", ""))
+    supabase_anon_key: str = field(
+        default_factory=lambda: os.environ.get("SUPABASE_ANON_KEY", "")
+    )
+    auth_disabled: bool = field(default_factory=lambda: _env_bool("AUTH_DISABLED", False))

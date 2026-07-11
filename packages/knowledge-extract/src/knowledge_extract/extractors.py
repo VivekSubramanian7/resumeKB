@@ -51,6 +51,36 @@ class FakeStructuredExtractor:
         self._responses = responses
 
     def extract(self, text: str, schema: type[T], instructions: str) -> T:
+        # #region agent log
+        try:
+            from pathlib import Path
+            import json
+            import time
+
+            log_path = Path(__file__).resolve().parents[4] / "debug-14c5ba.log"
+            with log_path.open("a", encoding="utf-8") as fh:
+                fh.write(
+                    json.dumps(
+                        {
+                            "sessionId": "14c5ba",
+                            "runId": "pre-fix",
+                            "hypothesisId": "A",
+                            "location": "extractors.py:FakeStructuredExtractor.extract",
+                            "message": "fake-extract-ignores-input",
+                            "data": {
+                                "schema": schema.__name__,
+                                "transcript_len": len(text),
+                                "transcript_preview": text[:160],
+                                "returns_canned": True,
+                            },
+                            "timestamp": int(time.time() * 1000),
+                        }
+                    )
+                    + "\n"
+                )
+        except OSError:
+            pass
+        # #endregion
         try:
             return self._responses[schema]  # type: ignore[return-value]
         except KeyError as exc:

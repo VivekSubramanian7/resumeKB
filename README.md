@@ -32,12 +32,34 @@ prompts" panel) — changes apply on the next request, no restart.
 
 ```powershell
 uv sync
-# .env already carries OPENAI_API_KEY, KB_EXTRACTOR, WHISPER_MODEL, PORT (8137), etc.
+cp .env.example .env   # then edit OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, etc.
 uv run uvicorn --factory resume_kb_server.app:create_app --port 8137
 ```
 
 Open http://127.0.0.1:8137. Set `KB_EXTRACTOR=fake` in `.env` to run fully
 offline with canned extraction (no API key needed).
+
+Set `AUTH_DISABLED=true` to skip login during local development or E2E tests.
+
+## Supabase setup (one-time)
+
+1. Create a project at [Supabase Dashboard](https://supabase.com/dashboard).
+2. Copy **Project URL** and the **anon public** key into `.env` as `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+3. **Authentication → Providers → Email**: enable the Email provider. For dev, you can disable “Confirm email” to speed up testing.
+4. **Authentication → URL configuration**: set **Site URL** to `http://127.0.0.1:8137` (add your production URL later).
+5. Restart the server and sign up / sign in from the login screen.
+
+Each authenticated user gets an isolated KB at `./kb-data/{user_id}/`. The legacy shared `./kb` directory is not merged automatically.
+
+### Migrating an existing KB
+
+After your first signup, copy your old entries into the new per-user folder:
+
+```powershell
+# Replace YOUR_USER_UUID with the id from GET /api/me after login
+mkdir kb-data\YOUR_USER_UUID
+xcopy /E /I kb kb-data\YOUR_USER_UUID
+```
 
 ## Test (E2E-only by design)
 
