@@ -377,6 +377,7 @@ def create_app(
             "auth_required": not settings.auth_disabled,
             "supabase_url": settings.supabase_url,
             "supabase_anon_key": settings.supabase_anon_key,
+            "max_note_seconds": settings.max_note_seconds,
         }
 
     @app.get("/api/me")

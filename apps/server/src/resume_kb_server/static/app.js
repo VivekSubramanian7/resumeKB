@@ -9,7 +9,9 @@ import {
   signUp,
 } from "./auth.js";
 
-const MAX_SECONDS = 120;
+function maxSeconds() {
+  return state.appConfig?.max_note_seconds || 120;
+}
 
 const $ = (id) => document.getElementById(id);
 
@@ -170,10 +172,10 @@ function startTimer() {
   state.timerInterval = setInterval(() => {
     state.elapsed += 1;
     updateTimerDisplay();
-    if (state.elapsed >= MAX_SECONDS - 10) {
+    if (state.elapsed >= maxSeconds() - 10) {
       $("timer").classList.add("timer-warn");
     }
-    if (state.elapsed >= MAX_SECONDS) {
+    if (state.elapsed >= maxSeconds()) {
       stopRecording();
     }
   }, 1000);
@@ -270,6 +272,10 @@ async function loadAppConfig() {
   const res = await fetch("/api/config");
   const cfg = await res.json();
   state.appConfig = cfg;
+  const secs = cfg.max_note_seconds || 120;
+  const m = Math.floor(secs / 60);
+  const s = String(Math.round(secs % 60)).padStart(2, "0");
+  $("timer-limit").textContent = `/ ${m}:${s}`;
   return cfg;
 }
 
