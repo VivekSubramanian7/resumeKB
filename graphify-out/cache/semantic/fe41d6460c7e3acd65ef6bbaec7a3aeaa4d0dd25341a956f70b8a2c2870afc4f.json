@@ -1,0 +1,1 @@
+{"nodes": [{"id": "pkg_doc_ingest", "label": "doc-ingest Package", "file_type": "code", "source_file": "packages/doc-ingest/src/doc_ingest/__init__.py", "source_location": null, "source_url": null, "captured_at": null, "author": null, "contributor": null}], "edges": [], "hyperedges": []}
