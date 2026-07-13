@@ -38,7 +38,9 @@ class Settings:
     whisper_compute_type: str = field(
         default_factory=lambda: os.environ.get("WHISPER_COMPUTE", "default")
     )
-    max_note_seconds: float = 120.0
+    max_note_seconds: float = field(
+        default_factory=lambda: float(os.environ.get("MAX_NOTE_SECONDS", "120"))
+    )
     github_token: str | None = field(default_factory=lambda: os.environ.get("GITHUB_TOKEN"))
     supabase_url: str = field(default_factory=lambda: os.environ.get("SUPABASE_URL", ""))
     supabase_anon_key: str = field(
