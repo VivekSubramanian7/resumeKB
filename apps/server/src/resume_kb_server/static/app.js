@@ -347,6 +347,30 @@ async function uploadLinkedIn(file) {
   }
 }
 
+async function uploadTextNote(file) {
+  const card = document.querySelector('[data-source="text-note"]');
+  const btn = $("text-note-btn");
+  setSourceStatus(card, "Processing…");
+  btn.disabled = true;
+  const form = new FormData();
+  form.append("document", file);
+  try {
+    const res = await apiFetch("/api/notes/text", { method: "POST", body: form });
+    const data = await res.json();
+    if (!res.ok) {
+      setSourceStatus(card, data.detail || "Upload failed.", "error");
+      return;
+    }
+    applySourceResult(card, data);
+    await loadEntries();
+    highlightChangedEntries(data.changes);
+  } catch {
+    setSourceStatus(card, "Network error.", "error");
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 // --- Knowledge base ---
 
 async function loadEntries(type = state.activeType) {
@@ -551,6 +575,13 @@ function bindEvents() {
   $("linkedin-input").addEventListener("change", (e) => {
     const file = e.target.files?.[0];
     if (file) uploadLinkedIn(file);
+    e.target.value = "";
+  });
+
+  $("text-note-btn").addEventListener("click", () => $("text-note-input").click());
+  $("text-note-input").addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    if (file) uploadTextNote(file);
     e.target.value = "";
   });
 
