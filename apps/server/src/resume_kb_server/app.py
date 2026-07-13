@@ -276,6 +276,47 @@ def create_app(
         finally:
             tmp.unlink(missing_ok=True)
 
+    @app.post("/api/notes/text")
+    def upload_text_note(
+        document: UploadFile = File(...),
+        store: KBStore = Depends(get_user_store),
+    ):
+        if not (document.filename or "").lower().endswith(".txt"):
+            raise HTTPException(status_code=422, detail="Only .txt files are supported here")
+        tmp = _save_upload(document)
+        try:
+            text = tmp.read_text(encoding="utf-8").strip()
+            if not text:
+                raise HTTPException(status_code=422, detail="Text file is empty")
+            try:
+                update = extractor.extract(text, ProfessionalUpdate, prompts.get(UPDATE_PROMPT))
+            except ExtractionError as exc:
+                raise HTTPException(status_code=502, detail=str(exc))
+            if not _professional_update_has_content(update):
+                return _ingest_response(
+                    entries=[],
+                    changes=[],
+                    kb_updated=False,
+                    extraction_mode=settings.extractor_backend,
+                    message=(
+                        "File processed, but no skills, projects, or achievements were extracted. "
+                        "Try a file with specific professional details."
+                    ),
+                )
+            entries = update_to_entries(update, source=f"text-note:{document.filename}")
+            slugs, changes = _persist_store(store, entries)
+            return _ingest_response(
+                entries=slugs,
+                changes=changes,
+                extraction_mode=settings.extractor_backend,
+                message=_change_message(
+                    changes,
+                    empty_hint="File processed, but the knowledge base already contained this information.",
+                ),
+            )
+        finally:
+            tmp.unlink(missing_ok=True)
+
     @app.post("/api/sources/github")
     def ingest_github(
         request: GitHubIngestRequest,
