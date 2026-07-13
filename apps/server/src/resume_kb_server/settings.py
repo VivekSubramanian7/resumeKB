@@ -31,6 +31,8 @@ class Settings:
         default_factory=lambda: os.environ.get("KB_EXTRACTOR", "openai")  # "openai" | "fake"
     )
     openai_model: str = field(default_factory=lambda: os.environ.get("OPENAI_MODEL", "gpt-4o"))
+    openai_base_url: str | None = field(default_factory=lambda: os.environ.get("OPENAI_BASE_URL"))
+    openai_api_key: str | None = field(default_factory=lambda: os.environ.get("OPENAI_API_KEY"))
     whisper_model: str = field(default_factory=lambda: os.environ.get("WHISPER_MODEL", "large-v3"))
     whisper_device: str = field(default_factory=lambda: os.environ.get("WHISPER_DEVICE", "auto"))
     whisper_compute_type: str = field(

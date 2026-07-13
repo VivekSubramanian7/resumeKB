@@ -19,29 +19,54 @@ class StructuredExtractor(Protocol):
 
 
 class OpenAIStructuredExtractor:
-    """Extracts any Pydantic schema from text using OpenAI structured outputs.
+    """Extracts any Pydantic schema from text via chat completions + JSON schema.
 
-    Requires a structured-outputs-capable model (gpt-4o and newer).
+    Works with OpenAI and any compatible local server (LM Studio, Ollama, etc.).
+    Pass base_url to point at a local server, e.g. http://192.168.1.x:1234/v1.
     """
 
-    def __init__(self, model: str = "gpt-4o", client: OpenAI | None = None) -> None:
-        self._client = client or OpenAI()
+    def __init__(
+        self,
+        model: str = "gpt-4o",
+        client: OpenAI | None = None,
+        base_url: str | None = None,
+        api_key: str | None = None,
+    ) -> None:
+        if client:
+            self._client = client
+        else:
+            kwargs: dict = {}
+            if base_url:
+                kwargs["base_url"] = base_url
+            if api_key:
+                kwargs["api_key"] = api_key
+            self._client = OpenAI(**kwargs)
         self._model = model
 
     def extract(self, text: str, schema: type[T], instructions: str) -> T:
-        response = self._client.responses.parse(
+        import json
+
+        response = self._client.chat.completions.create(
             model=self._model,
-            instructions=instructions,
-            input=text,
-            text_format=schema,
+            messages=[
+                {"role": "system", "content": instructions},
+                {"role": "user", "content": text},
+            ],
+            response_format={
+                "type": "json_schema",
+                "json_schema": {
+                    "name": schema.__name__,
+                    "schema": schema.model_json_schema(),
+                    "strict": True,
+                },
+            },
         )
-        parsed = response.output_parsed
-        if parsed is None:
+        content = response.choices[0].message.content
+        if not content:
             raise ExtractionError(
-                f"model {self._model} returned no parsed {schema.__name__} "
-                f"(refusal or incomplete output)"
+                f"model {self._model} returned no content for {schema.__name__}"
             )
-        return parsed
+        return schema.model_validate(json.loads(content))
 
 
 class FakeStructuredExtractor:

@@ -143,7 +143,11 @@ def _ingest_response(**fields) -> dict:
 def _build_extractor(settings: Settings) -> StructuredExtractor:
     if settings.extractor_backend == "fake":
         return build_fake_extractor()
-    return OpenAIStructuredExtractor(model=settings.openai_model)
+    return OpenAIStructuredExtractor(
+        model=settings.openai_model,
+        base_url=settings.openai_base_url,
+        api_key=settings.openai_api_key,
+    )
 
 
 def create_app(
