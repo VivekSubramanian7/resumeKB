@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "./components/Header";
 import { BottomNav } from "./components/BottomNav";
 import { AuthCard } from "./components/AuthCard";
@@ -9,11 +9,42 @@ import { useAuth } from "./hooks/use-auth";
 import "./index.css";
 
 type Tab = "capture" | "knowledge";
+type Theme = "light" | "dark" | "system";
+
+function getInitialTheme(): Theme {
+  return (localStorage.getItem("theme") as Theme) ?? "system";
+}
 
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>("capture");
   const [probeVisible, setProbeVisible] = useState(false);
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const { user, loading, authRequired, maxNoteSeconds, signIn, signUp } = useAuth();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "system") {
+      root.removeAttribute("data-theme");
+    } else {
+      root.setAttribute("data-theme", theme);
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  function handleThemeToggle() {
+    setTheme(prev => {
+      if (prev === "system") {
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        return prefersDark ? "light" : "dark";
+      }
+      return prev === "light" ? "dark" : "light";
+    });
+  }
+
+  const resolvedTheme: "light" | "dark" =
+    theme === "system"
+      ? (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark")
+      : theme;
 
   if (loading) {
     return <div className="min-h-dvh bg-[var(--bg)]" />;
@@ -36,10 +67,12 @@ export function App() {
           username={user?.email?.split("@")[0] ?? "local"}
           hasProbeQuestion={!probeVisible}
           onProbeTrigger={() => setProbeVisible(true)}
+          theme={resolvedTheme}
+          onThemeToggle={handleThemeToggle}
         />
 
         <main
-          className={`flex-1 w-full mx-auto px-6 pb-28 ${activeTab === "capture" ? "max-w-[520px] pt-12" : "max-w-[640px] pt-8"}`}
+          className={`flex-1 w-full mx-auto px-6 pb-28 ${activeTab === "capture" ? "max-w-[560px] pt-8" : "max-w-[640px] pt-8"}`}
         >
           {activeTab === "capture" && (
             <CaptureView
