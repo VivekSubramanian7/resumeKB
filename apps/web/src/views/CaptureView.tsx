@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { toast } from "sonner";
 import { ProbeCard } from "@/components/ProbeCard";
 import { RecordButton } from "@/components/RecordButton";
 import { SourcePills } from "@/components/SourcePills";
 import * as api from "@/lib/api";
+import { useRecorder } from "@/hooks/use-recorder";
 
 interface CaptureViewProps {
   probeVisible: boolean;
@@ -12,16 +12,28 @@ interface CaptureViewProps {
 }
 
 export function CaptureView({ probeVisible, onProbeDismiss, maxNoteSeconds }: CaptureViewProps) {
-  const [isRecording, setIsRecording] = useState(false);
-  const [elapsed] = useState(0);
+  const { isRecording, elapsed, start, stop } = useRecorder(maxNoteSeconds);
 
   const handleSaveProbe = (_answer: string) => {
     toast.success("Answer saved to KB");
     onProbeDismiss();
   };
 
-  const handleRecord = () => {
-    setIsRecording(!isRecording);
+  const handleRecord = async () => {
+    if (isRecording) {
+      const blob = await stop();
+      if (blob) {
+        const file = new File([blob], "recording.webm", { type: "audio/webm" });
+        try {
+          const result = await api.upload("/api/notes", file, "audio");
+          toast.success((result as { message: string }).message);
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Processing failed");
+        }
+      }
+    } else {
+      start();
+    }
   };
 
   const handleUploadCV = async (file: File) => {
