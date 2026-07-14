@@ -31,7 +31,7 @@ export function SourcePills({ onUploadCV, onGitHub, onLinkedIn, onTextFile }: So
           <Icon name="Upload" size={14} />
           Upload CV
         </Button>
-        <input ref={cvRef} type="file" accept=".pdf,.docx" hidden onChange={(e) => e.target.files?.[0] && onUploadCV(e.target.files[0])} />
+        <input ref={cvRef} type="file" accept=".pdf,.docx" hidden onChange={(e) => { if (e.target.files?.[0]) { onUploadCV(e.target.files[0]); e.target.value = ""; } }} />
 
         <Button
           variant="outline"
@@ -50,7 +50,7 @@ export function SourcePills({ onUploadCV, onGitHub, onLinkedIn, onTextFile }: So
           <Icon name="LinkOne" size={14} />
           LinkedIn
         </Button>
-        <input ref={linkedInRef} type="file" accept=".zip" hidden onChange={(e) => e.target.files?.[0] && onLinkedIn(e.target.files[0])} />
+        <input ref={linkedInRef} type="file" accept=".zip" hidden onChange={(e) => { if (e.target.files?.[0]) { onLinkedIn(e.target.files[0]); e.target.value = ""; } }} />
 
         <Button
           variant="outline"
@@ -60,7 +60,7 @@ export function SourcePills({ onUploadCV, onGitHub, onLinkedIn, onTextFile }: So
           <Icon name="FileText" size={14} />
           Text file
         </Button>
-        <input ref={textRef} type="file" accept=".txt" hidden onChange={(e) => e.target.files?.[0] && onTextFile(e.target.files[0])} />
+        <input ref={textRef} type="file" accept=".txt" hidden onChange={(e) => { if (e.target.files?.[0]) { onTextFile(e.target.files[0]); e.target.value = ""; } }} />
       </div>
     </>
   );

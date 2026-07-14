@@ -17,7 +17,7 @@ export function CaptureView({ probeVisible, onProbeDismiss, maxNoteSeconds }: Ca
   const [isUploading, setIsUploading] = useState(false);
 
   const handleSaveProbe = (_answer: string) => {
-    toast.success("Answer saved to KB");
+    toast.success("Answer saved");
     onProbeDismiss();
   };
 
