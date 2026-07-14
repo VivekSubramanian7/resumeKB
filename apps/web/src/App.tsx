@@ -3,6 +3,7 @@ import { Header } from "./components/Header";
 import { BottomNav } from "./components/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
 import { CaptureView } from "./views/CaptureView";
+import { KnowledgeView } from "./views/KnowledgeView";
 import { useAuth } from "./hooks/use-auth";
 import "./index.css";
 
@@ -35,8 +36,7 @@ export function App() {
         />
 
         <main
-          className="flex-1 w-full mx-auto px-6 pt-12 pb-28"
-          style={{ maxWidth: activeTab === "capture" ? "520px" : "640px" }}
+          className={`flex-1 w-full mx-auto px-6 pb-28 ${activeTab === "capture" ? "max-w-[520px] pt-12" : "max-w-[640px] pt-8"}`}
         >
           {activeTab === "capture" && (
             <CaptureView
@@ -45,7 +45,7 @@ export function App() {
               maxNoteSeconds={maxNoteSeconds}
             />
           )}
-          {activeTab === "knowledge" && <div>Knowledge View</div>}
+          {activeTab === "knowledge" && <KnowledgeView />}
         </main>
 
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
