@@ -28,7 +28,6 @@ COPY scripts/cache_whisper_model.py scripts/cache_whisper_model.py
 COPY scripts/docker-entrypoint.sh scripts/docker-entrypoint.sh
 
 RUN uv sync --frozen --no-dev \
-    && uv run python scripts/cache_whisper_model.py \
     && chmod +x scripts/docker-entrypoint.sh
 
 EXPOSE 8137
