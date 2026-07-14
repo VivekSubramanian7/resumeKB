@@ -27,14 +27,8 @@ export function App() {
     <div className="relative min-h-dvh flex flex-col">
       {/* Ambient orbs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
-        <div
-          className="ambient-orb w-[500px] h-[500px] bg-[oklch(0.35_0.12_290)] -top-[150px] -right-[100px] absolute"
-          style={{ animationDelay: "-5s" }}
-        />
-        <div
-          className="ambient-orb w-[350px] h-[350px] bg-[oklch(0.3_0.08_55)] -bottom-[80px] -left-[50px] absolute"
-          style={{ animationDelay: "-10s", animationDuration: "25s" }}
-        />
+        <div className="ambient-orb orb-primary w-[500px] h-[500px] -top-[150px] -right-[100px] absolute" style={{ animationDelay: "-5s" }} />
+        <div className="ambient-orb orb-secondary w-[350px] h-[350px] -bottom-[80px] -left-[50px] absolute" style={{ animationDelay: "-10s", animationDuration: "25s" }} />
       </div>
 
       <div className="relative z-[1] flex flex-col min-h-dvh">

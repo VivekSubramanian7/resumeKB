@@ -113,7 +113,7 @@ export function KnowledgeView() {
             {entries.map((entry) => (
               <li
                 key={entry.slug}
-                className="flex items-center gap-3 px-4 py-3 bg-[var(--surface)] border border-[var(--border-subtle)] rounded-lg cursor-pointer transition-all duration-300 hover:border-[var(--border)] hover:bg-[var(--surface-raised)]"
+                className="flex items-center gap-3 px-4 py-3 bg-[var(--surface)] border border-[var(--border-subtle)] rounded-lg cursor-pointer transition-all duration-300 hover:border-[var(--accent)] hover:shadow-[0_2px_8px_var(--accent-glow)]"
               >
                 {entry.entry_type && (
                   <Badge

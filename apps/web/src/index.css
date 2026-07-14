@@ -72,6 +72,24 @@
 }
 
 @layer components {
+  .orb-primary {
+    background: oklch(0.35 0.12 290);
+  }
+  .orb-secondary {
+    background: oklch(0.3 0.08 55);
+  }
+
+  @media (prefers-color-scheme: light) {
+    .orb-primary {
+      background: oklch(0.85 0.12 290);
+      opacity: 0.5;
+    }
+    .orb-secondary {
+      background: oklch(0.88 0.08 200);
+      opacity: 0.4;
+    }
+  }
+
   .ambient-orb {
     position: absolute;
     border-radius: 50%;
