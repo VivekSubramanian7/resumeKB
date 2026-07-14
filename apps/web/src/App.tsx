@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Header } from "./components/Header";
 import { BottomNav } from "./components/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
+import { CaptureView } from "./views/CaptureView";
 import "./index.css";
 
 type Tab = "capture" | "knowledge";
@@ -35,7 +36,13 @@ export function App() {
           className="flex-1 w-full mx-auto px-6 pt-12 pb-28"
           style={{ maxWidth: activeTab === "capture" ? "520px" : "640px" }}
         >
-          {activeTab === "capture" && <div>Capture View</div>}
+          {activeTab === "capture" && (
+            <CaptureView
+              probeVisible={probeVisible}
+              onProbeDismiss={() => setProbeVisible(false)}
+              maxNoteSeconds={120}
+            />
+          )}
           {activeTab === "knowledge" && <div>Knowledge View</div>}
         </main>
 
