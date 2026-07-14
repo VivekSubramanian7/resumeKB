@@ -31,31 +31,33 @@ export function useAuth(): AuthState {
     let sub: { unsubscribe: () => void } | null = null;
 
     (async () => {
-      const config = await get<AppConfig>("/api/config");
-      setAuthRequired(config.auth_required);
-      setMaxNoteSeconds(config.max_note_seconds);
+      try {
+        const config = await get<AppConfig>("/api/config");
+        setAuthRequired(config.auth_required);
+        setMaxNoteSeconds(config.max_note_seconds);
 
-      if (!config.auth_required) {
+        if (!config.auth_required) {
+          return;
+        }
+
+        supabase = createClient(config.supabase_url, config.supabase_anon_key, {
+          auth: { persistSession: true, autoRefreshToken: true },
+        });
+
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          setAccessToken(data.session.access_token);
+          setUser(data.session.user);
+        }
+
+        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+          setAccessToken(session?.access_token ?? null);
+          setUser(session?.user ?? null);
+        });
+        sub = listener.subscription;
+      } finally {
         setLoading(false);
-        return;
       }
-
-      supabase = createClient(config.supabase_url, config.supabase_anon_key, {
-        auth: { persistSession: true, autoRefreshToken: true },
-      });
-
-      const { data } = await supabase.auth.getSession();
-      if (data.session) {
-        setAccessToken(data.session.access_token);
-        setUser(data.session.user);
-      }
-      setLoading(false);
-
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-        setAccessToken(session?.access_token ?? null);
-        setUser(session?.user ?? null);
-      });
-      sub = listener.subscription;
     })();
 
     return () => { sub?.unsubscribe(); };
