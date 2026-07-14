@@ -3,6 +3,7 @@ interface RecordButtonProps {
   elapsed: number;
   maxSeconds: number;
   onToggle: () => void;
+  disabled?: boolean;
 }
 
 function formatTime(seconds: number): string {
@@ -11,7 +12,7 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
-export function RecordButton({ isRecording, elapsed, maxSeconds, onToggle }: RecordButtonProps) {
+export function RecordButton({ isRecording, elapsed, maxSeconds, onToggle, disabled }: RecordButtonProps) {
   return (
     <section className="flex flex-col items-center gap-5">
       <div className="relative w-[120px] h-[120px] flex items-center justify-center">
@@ -22,8 +23,9 @@ export function RecordButton({ isRecording, elapsed, maxSeconds, onToggle }: Rec
         {/* Button */}
         <button
           onClick={onToggle}
+          disabled={disabled}
           aria-label={isRecording ? "Stop recording" : "Start recording"}
-          className="w-[68px] h-[68px] rounded-full bg-[var(--surface-raised)] flex items-center justify-center shadow-[0_4px_20px_oklch(0_0_0/0.3)] transition-transform duration-300 hover:scale-[1.06]"
+          className="w-[68px] h-[68px] rounded-full bg-[var(--surface-raised)] flex items-center justify-center shadow-[0_4px_20px_oklch(0_0_0/0.3)] transition-transform duration-300 hover:scale-[1.06] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         >
           {isRecording ? (
             <span className="w-5 h-5 rounded-sm bg-[var(--warm)]" />

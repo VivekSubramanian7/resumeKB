@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { ProbeCard } from "@/components/ProbeCard";
 import { RecordButton } from "@/components/RecordButton";
@@ -13,6 +14,7 @@ interface CaptureViewProps {
 
 export function CaptureView({ probeVisible, onProbeDismiss, maxNoteSeconds }: CaptureViewProps) {
   const { isRecording, elapsed, start, stop } = useRecorder(maxNoteSeconds);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleSaveProbe = (_answer: string) => {
     toast.success("Answer saved to KB");
@@ -24,15 +26,22 @@ export function CaptureView({ probeVisible, onProbeDismiss, maxNoteSeconds }: Ca
       const blob = await stop();
       if (blob) {
         const file = new File([blob], "recording.webm", { type: "audio/webm" });
+        setIsUploading(true);
         try {
           const result = await api.upload("/api/notes", file, "audio");
           toast.success((result as { message: string }).message);
         } catch (e) {
           toast.error(e instanceof Error ? e.message : "Processing failed");
+        } finally {
+          setIsUploading(false);
         }
       }
     } else {
-      start();
+      try {
+        await start();
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Microphone access denied");
+      }
     }
   };
 
@@ -87,6 +96,7 @@ export function CaptureView({ probeVisible, onProbeDismiss, maxNoteSeconds }: Ca
         elapsed={elapsed}
         maxSeconds={maxNoteSeconds}
         onToggle={handleRecord}
+        disabled={isUploading}
       />
 
       <SourcePills

@@ -20,7 +20,9 @@ export function useRecorder(maxSeconds: number): RecorderState {
       timerRef.current = window.setInterval(() => {
         setElapsed((e) => {
           if (e + 1 >= maxSeconds) {
-            mediaRecorder.current?.stop();
+            if (mediaRecorder.current?.state === "recording") {
+              mediaRecorder.current.stop();
+            }
             return maxSeconds;
           }
           return e + 1;
