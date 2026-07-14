@@ -3,6 +3,7 @@ import { Header } from "./components/Header";
 import { BottomNav } from "./components/BottomNav";
 import { Toaster } from "@/components/ui/sonner";
 import { CaptureView } from "./views/CaptureView";
+import { useAuth } from "./hooks/use-auth";
 import "./index.css";
 
 type Tab = "capture" | "knowledge";
@@ -10,6 +11,7 @@ type Tab = "capture" | "knowledge";
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>("capture");
   const [probeVisible, setProbeVisible] = useState(false);
+  const { maxNoteSeconds } = useAuth();
 
   return (
     <div className="relative min-h-dvh flex flex-col">
@@ -40,7 +42,7 @@ export function App() {
             <CaptureView
               probeVisible={probeVisible}
               onProbeDismiss={() => setProbeVisible(false)}
-              maxNoteSeconds={120}
+              maxNoteSeconds={maxNoteSeconds}
             />
           )}
           {activeTab === "knowledge" && <div>Knowledge View</div>}
