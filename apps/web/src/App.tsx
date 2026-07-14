@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Header } from "./components/Header";
 import { BottomNav } from "./components/BottomNav";
+import { AuthCard } from "./components/AuthCard";
 import { Toaster } from "@/components/ui/sonner";
 import { CaptureView } from "./views/CaptureView";
 import { KnowledgeView } from "./views/KnowledgeView";
@@ -12,7 +13,15 @@ type Tab = "capture" | "knowledge";
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>("capture");
   const [probeVisible, setProbeVisible] = useState(false);
-  const { maxNoteSeconds } = useAuth();
+  const { user, loading, authRequired, maxNoteSeconds, signIn, signUp } = useAuth();
+
+  if (loading) {
+    return <div className="min-h-dvh bg-[var(--bg)]" />;
+  }
+
+  if (authRequired && !user) {
+    return <AuthCard onSignIn={signIn} onSignUp={signUp} />;
+  }
 
   return (
     <div className="relative min-h-dvh flex flex-col">
@@ -30,7 +39,7 @@ export function App() {
 
       <div className="relative z-[1] flex flex-col min-h-dvh">
         <Header
-          username="praful"
+          username={user?.email?.split("@")[0] ?? "local"}
           hasProbeQuestion={!probeVisible}
           onProbeTrigger={() => setProbeVisible(true)}
         />
