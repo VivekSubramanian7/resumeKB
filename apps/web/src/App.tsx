@@ -17,7 +17,7 @@ function getInitialTheme(): Theme {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>("capture");
-  const [probeVisible, setProbeVisible] = useState(false);
+  const [probeVisible, setProbeVisible] = useState(true);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const { user, loading, authRequired, maxNoteSeconds, signIn, signUp } = useAuth();
 
