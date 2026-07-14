@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Send, Microphone } from "@icon-park/react";
+import { Send, Microphone, Brain } from "@icon-park/react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ interface UnifiedCaptureCardProps {
   probeContext: string;
   onProbeSave: (answer: string) => void;
   onProbeSkip: () => void;
+  onProbeTrigger: () => void;
   maxNoteSeconds: number;
   onUploadCV: (file: File) => void;
   onGitHub: () => void;
@@ -34,6 +35,7 @@ export function UnifiedCaptureCard({
   probeContext,
   onProbeSave,
   onProbeSkip,
+  onProbeTrigger,
   maxNoteSeconds,
   onUploadCV,
   onGitHub,
@@ -143,9 +145,20 @@ export function UnifiedCaptureCard({
           onTextFile={onTextFile}
         />
 
-        <span className="text-[0.75rem] text-[var(--ink-dim)] px-2">Voice</span>
-
         <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onProbeTrigger}
+            disabled={probeVisible}
+            className="relative w-8 h-8 rounded-full border border-[var(--border-subtle)] text-[var(--ink-dim)] hover:text-[var(--accent)] hover:border-[var(--accent)] disabled:opacity-40 transition-colors"
+            aria-label="Answer a probe question"
+          >
+            <Brain theme="outline" size={15} strokeWidth={3} />
+            {!probeVisible && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--warm)] border-2 border-[var(--surface)]" />
+            )}
+          </Button>
           <InlineRecordButton
             isRecording={isRecording}
             onToggle={handleRecord}

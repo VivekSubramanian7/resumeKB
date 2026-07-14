@@ -1,13 +1,14 @@
+import { Sun, Moon } from "@icon-park/react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
   username: string;
-  hasProbeQuestion: boolean;
-  onProbeTrigger: () => void;
+  theme: "light" | "dark";
+  onThemeToggle: () => void;
 }
 
-export function Header({ username, hasProbeQuestion, onProbeTrigger }: HeaderProps) {
+export function Header({ username, theme, onThemeToggle }: HeaderProps) {
   return (
     <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-[var(--border-subtle)] bg-[var(--bg)]/80 backdrop-blur-xl">
       <h1 className="font-[var(--font-display)] text-[1.25rem] font-normal tracking-tight">
@@ -17,14 +18,13 @@ export function Header({ username, hasProbeQuestion, onProbeTrigger }: HeaderPro
         <Button
           variant="ghost"
           size="icon"
-          className="relative w-9 h-9 rounded-full border border-[var(--border)] bg-[var(--surface-raised)]"
-          onClick={onProbeTrigger}
-          aria-label="Answer a probe question"
+          className="w-9 h-9 rounded-full border border-[var(--border)] bg-[var(--surface-raised)] text-[var(--ink-muted)] hover:text-[var(--ink)] hover:border-[var(--border)] transition-colors"
+          onClick={onThemeToggle}
+          aria-label={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
         >
-          <span className="w-2.5 h-2.5 rounded-full bg-[var(--accent)] animate-[probe-pulse_2.5s_ease-in-out_infinite]" />
-          {hasProbeQuestion && (
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--warm)] border-2 border-[var(--bg)]" />
-          )}
+          {theme === "light"
+            ? <Moon theme="outline" size={16} strokeWidth={3} />
+            : <Sun theme="outline" size={16} strokeWidth={3} />}
         </Button>
         <Badge variant="outline" className="text-xs text-[var(--ink-muted)] border-[var(--border)] rounded-full px-3 py-1">
           {username}

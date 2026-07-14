@@ -4,11 +4,12 @@ import * as api from "@/lib/api";
 
 interface CaptureViewProps {
   probeVisible: boolean;
+  onProbeTrigger: () => void;
   onProbeDismiss: () => void;
   maxNoteSeconds: number;
 }
 
-export function CaptureView({ probeVisible, onProbeDismiss, maxNoteSeconds }: CaptureViewProps) {
+export function CaptureView({ probeVisible, onProbeTrigger, onProbeDismiss, maxNoteSeconds }: CaptureViewProps) {
   const handleSaveProbe = (_answer: string) => {
     toast.success("Answer saved");
     onProbeDismiss();
@@ -57,6 +58,7 @@ export function CaptureView({ probeVisible, onProbeDismiss, maxNoteSeconds }: Ca
         probeContext='This connects your "resumeKB" project with "Python" and "API Design" skills.'
         onProbeSave={handleSaveProbe}
         onProbeSkip={onProbeDismiss}
+        onProbeTrigger={onProbeTrigger}
         maxNoteSeconds={maxNoteSeconds}
         onUploadCV={handleUploadCV}
         onGitHub={handleGitHub}

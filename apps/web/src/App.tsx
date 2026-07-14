@@ -65,8 +65,6 @@ export function App() {
       <div className="relative z-[1] flex flex-col min-h-dvh">
         <Header
           username={user?.email?.split("@")[0] ?? "local"}
-          hasProbeQuestion={!probeVisible}
-          onProbeTrigger={() => setProbeVisible(true)}
           theme={resolvedTheme}
           onThemeToggle={handleThemeToggle}
         />
@@ -77,6 +75,7 @@ export function App() {
           {activeTab === "capture" && (
             <CaptureView
               probeVisible={probeVisible}
+              onProbeTrigger={() => setProbeVisible(true)}
               onProbeDismiss={() => setProbeVisible(false)}
               maxNoteSeconds={maxNoteSeconds}
             />
