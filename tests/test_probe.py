@@ -4,18 +4,8 @@ import pytest
 from pydantic import BaseModel
 
 from kb_core import KBEntry
+from knowledge_extract import FakeStructuredExtractor
 from knowledge_extract.probe import GapAnalysisProbeGenerator, ProbeQuestion
-
-
-class FakeProbeExtractor:
-    """Returns a canned ProbeQuestion JSON for any extraction call."""
-
-    def extract(self, text: str, schema: type, instructions: str):
-        return schema.model_validate({
-            "question": "What motivated you to learn Python?",
-            "context": "Your KB has Python as a skill but no origin story.",
-            "related_entries": ["skill-python"],
-        })
 
 
 class FakePromptLibrary:
@@ -38,9 +28,17 @@ class TestProbeQuestion:
 
 
 class TestGapAnalysisProbeGenerator:
+    def _make_extractor(self) -> FakeStructuredExtractor:
+        canned_response = ProbeQuestion(
+            question="What motivated you to learn Python?",
+            context="Your KB has Python as a skill but no origin story.",
+            related_entries=["skill-python"],
+        )
+        return FakeStructuredExtractor({ProbeQuestion: canned_response})
+
     def test_generate_returns_probe_question(self):
         gen = GapAnalysisProbeGenerator(
-            extractor=FakeProbeExtractor(),
+            extractor=self._make_extractor(),
             prompts=FakePromptLibrary(),
         )
         entries = [
@@ -55,7 +53,7 @@ class TestGapAnalysisProbeGenerator:
 
     def test_generate_returns_none_for_empty_kb(self):
         gen = GapAnalysisProbeGenerator(
-            extractor=FakeProbeExtractor(),
+            extractor=self._make_extractor(),
             prompts=FakePromptLibrary(),
         )
         result = gen.generate([])
