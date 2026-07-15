@@ -176,4 +176,5 @@ class TestProbeAPI:
         assert resp.status_code == 200
         data = resp.json()
         assert "changes" in data
+        assert "kb_updated" in data
         assert "message" in data

@@ -2,6 +2,7 @@
 
 from doc_ingest import CVProfile, EducationItem, ExperienceItem
 from knowledge_extract import FakeStructuredExtractor, ProfessionalUpdate, ProjectMention
+from knowledge_extract.probe import ProbeQuestion
 
 FAKE_UPDATE = ProfessionalUpdate(
     summary="Completed the payment gateway migration",
@@ -34,5 +35,16 @@ FAKE_CV = CVProfile(
 )
 
 
+FAKE_PROBE = ProbeQuestion(
+    question="What motivated you to start your career in software?",
+    context="Your KB has skills and projects but no origin story.",
+    related_entries=[],
+)
+
+
 def build_fake_extractor() -> FakeStructuredExtractor:
-    return FakeStructuredExtractor({ProfessionalUpdate: FAKE_UPDATE, CVProfile: FAKE_CV})
+    return FakeStructuredExtractor({
+        ProfessionalUpdate: FAKE_UPDATE,
+        CVProfile: FAKE_CV,
+        ProbeQuestion: FAKE_PROBE,
+    })
