@@ -16,6 +16,7 @@ interface CaptureViewProps {
   onProbeTrigger: () => void;
   onProbeDismiss: () => void;
   maxNoteSeconds: number;
+  onProcessingChange: (delta: 1 | -1) => void;
 }
 
 const HINT_CHIPS = [
@@ -24,7 +25,7 @@ const HINT_CHIPS = [
   { label: "Answer a probe", action: "probe" as const },
 ];
 
-export function CaptureView({ probeVisible, probeData, onProbeTrigger, onProbeDismiss, maxNoteSeconds }: CaptureViewProps) {
+export function CaptureView({ probeVisible, probeData, onProbeTrigger, onProbeDismiss, maxNoteSeconds, onProcessingChange }: CaptureViewProps) {
   const [githubDialogOpen, setGithubDialogOpen] = useState(false);
   const [githubUsername, setGithubUsername] = useState("");
   const [hintHovered, setHintHovered] = useState<string | null>(null);
@@ -46,11 +47,14 @@ export function CaptureView({ probeVisible, probeData, onProbeTrigger, onProbeDi
   };
 
   const handleUploadCV = async (file: File) => {
+    onProcessingChange(1);
     try {
       const result = await api.upload("/api/documents", file, "document");
       toast.success((result as { message: string }).message);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      onProcessingChange(-1);
     }
   };
 
@@ -66,26 +70,34 @@ export function CaptureView({ probeVisible, probeData, onProbeTrigger, onProbeDi
     if (!u) return;
     dialogRef.current?.close();
     setGithubDialogOpen(false);
+    onProcessingChange(1);
     api.post("/api/sources/github", { username: u })
       .then((r) => toast.success((r as { message: string }).message))
-      .catch((e) => toast.error(e instanceof Error ? e.message : "Import failed"));
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Import failed"))
+      .finally(() => onProcessingChange(-1));
   };
 
   const handleLinkedIn = async (file: File) => {
+    onProcessingChange(1);
     try {
       const result = await api.upload("/api/sources/linkedin", file, "export");
       toast.success((result as { message: string }).message);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      onProcessingChange(-1);
     }
   };
 
   const handleTextFile = async (file: File) => {
+    onProcessingChange(1);
     try {
       const result = await api.upload("/api/notes/text", file, "document");
       toast.success((result as { message: string }).message);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      onProcessingChange(-1);
     }
   };
 
@@ -109,6 +121,7 @@ export function CaptureView({ probeVisible, probeData, onProbeTrigger, onProbeDi
         onGitHub={openGithubDialog}
         onLinkedIn={handleLinkedIn}
         onTextFile={handleTextFile}
+        onProcessingChange={onProcessingChange}
       />
 
       {/* Empty-state hint chips */}

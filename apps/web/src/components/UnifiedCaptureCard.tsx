@@ -22,6 +22,7 @@ interface UnifiedCaptureCardProps {
   onGitHub: () => void;
   onLinkedIn: (file: File) => void;
   onTextFile: (file: File) => void;
+  onProcessingChange?: (delta: 1 | -1) => void;
 }
 
 function formatTime(seconds: number): string {
@@ -42,6 +43,7 @@ export function UnifiedCaptureCard({
   onGitHub,
   onLinkedIn,
   onTextFile,
+  onProcessingChange,
 }: UnifiedCaptureCardProps) {
   const { isRecording, elapsed, analyser, start, stop } = useRecorder(maxNoteSeconds);
   const [text, setText] = useState("");
@@ -53,6 +55,7 @@ export function UnifiedCaptureCard({
       if (blob) {
         const file = new File([blob], "recording.webm", { type: "audio/webm" });
         setIsUploading(true);
+        onProcessingChange?.(1);
         try {
           const result = await api.upload("/api/notes", file, "audio");
           const msg = (result as { transcription?: string; message?: string }).transcription
@@ -63,6 +66,7 @@ export function UnifiedCaptureCard({
           toast.error(e instanceof Error ? e.message : "Processing failed");
         } finally {
           setIsUploading(false);
+          onProcessingChange?.(-1);
         }
       }
     } else {
@@ -79,9 +83,11 @@ export function UnifiedCaptureCard({
     if (probeVisible) {
       onProbeSave(text.trim());
     } else {
+      onProcessingChange?.(1);
       api.post("/api/notes/text", { content: text.trim() })
         .then((r) => toast.success((r as { message: string }).message))
-        .catch((e) => toast.error(e instanceof Error ? e.message : "Save failed"));
+        .catch((e) => toast.error(e instanceof Error ? e.message : "Save failed"))
+        .finally(() => onProcessingChange?.(-1));
     }
     setText("");
   };

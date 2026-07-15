@@ -27,6 +27,10 @@ export function App() {
   const [probeVisible, setProbeVisible] = useState(false);
   const [probeData, setProbeData] = useState<ProbeData | null>(null);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [processingCount, setProcessingCount] = useState(0);
+
+  const handleProcessingChange = (delta: 1 | -1) =>
+    setProcessingCount((n) => Math.max(0, n + delta));
   const { user, loading, authRequired, maxNoteSeconds, signIn, signUp } = useAuth();
 
   useEffect(() => {
@@ -83,6 +87,17 @@ export function App() {
 
   return (
     <div className="relative min-h-dvh flex flex-col">
+      {processingCount > 0 && (
+        <div className="fixed top-0 left-0 right-0 z-50 h-[2px] overflow-hidden" style={{ background: "var(--border-subtle)" }}>
+          <div
+            className="absolute inset-y-0 w-1/3"
+            style={{
+              background: "linear-gradient(90deg, transparent, var(--accent), transparent)",
+              animation: "shimmer 1.4s ease-in-out infinite",
+            }}
+          />
+        </div>
+      )}
       {/* Ambient orbs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
         <div className="ambient-orb orb-primary w-[600px] h-[600px] -top-[180px] -right-[120px] absolute" style={{ animationDelay: "-5s" }} />
@@ -113,6 +128,7 @@ export function App() {
               onProbeTrigger={handleProbeTrigger}
               onProbeDismiss={() => setProbeVisible(false)}
               maxNoteSeconds={maxNoteSeconds}
+              onProcessingChange={handleProcessingChange}
             />
           )}
           {activeTab === "knowledge" && <KnowledgeView />}
