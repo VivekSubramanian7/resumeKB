@@ -66,7 +66,7 @@ export function Waveform({ analyser, width = 280, height = 56, className }: Wave
       if (analyser && timeData) {
         analyser.getFloatTimeDomainData(timeData);
         let sum = 0;
-        for (let i = 0; i < timeData.length; i++) sum += timeData[i] * timeData[i];
+        for (let i = 0; i < timeData.length; i++) { const s = timeData[i] ?? 0; sum += s * s; }
         rms = Math.sqrt(sum / timeData.length);
       }
 

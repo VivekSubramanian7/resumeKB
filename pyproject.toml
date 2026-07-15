@@ -16,7 +16,7 @@ dependencies = [
 package = false
 
 [tool.uv.workspace]
-members = ["packages/*", "apps/*"]
+members = ["packages/*", "apps/server"]
 
 [tool.uv.sources]
 kb-core = { workspace = true }
