@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, File, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, HTTPException, Response, UploadFile
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -14,10 +14,12 @@ from doc_ingest import CVProfile, UnsupportedDocumentType, convert_to_markdown, 
 from kb_core import KBEntry, KBStore
 from knowledge_extract import (
     ExtractionError,
+    GapAnalysisProbeGenerator,
     OpenAIStructuredExtractor,
     ProfessionalUpdate,
     PromptLibrary,
     PromptNotFound,
+    ProbeStore,
     StructuredExtractor,
     update_to_entries,
 )
@@ -37,6 +39,7 @@ STATIC_DIR = Path(__file__).parent / "static"
 
 UPDATE_PROMPT = "professional_update"
 CV_PROMPT = "cv_profile"
+PROBE_PROMPT = "probe_generation"
 
 
 class GitHubIngestRequest(BaseModel):
@@ -45,6 +48,10 @@ class GitHubIngestRequest(BaseModel):
 
 class PromptUpdateRequest(BaseModel):
     content: str
+
+
+class ProbeAnswerRequest(BaseModel):
+    text: str
 
 
 def _professional_update_has_content(update: ProfessionalUpdate) -> bool:
@@ -140,6 +147,27 @@ def _ingest_response(**fields) -> dict:
     }
 
 
+def _maybe_generate_probe(
+    store: KBStore,
+    probe_store: ProbeStore,
+    extractor: StructuredExtractor,
+    prompts: PromptLibrary,
+) -> None:
+    """Generate a new probe if the probe prompt exists. Fails silently."""
+    try:
+        prompts.get(PROBE_PROMPT)
+    except PromptNotFound:
+        return
+    try:
+        gen = GapAnalysisProbeGenerator(extractor=extractor, prompts=prompts)
+        entries = store.list()
+        probe = gen.generate(entries)
+        if probe:
+            probe_store.save(probe)
+    except Exception:
+        pass  # probe generation is best-effort
+
+
 def _build_extractor(settings: Settings) -> StructuredExtractor:
     if settings.extractor_backend == "fake":
         return build_fake_extractor()
@@ -165,6 +193,9 @@ def create_app(
     def get_user_store(user: AuthUser = Depends(get_current_user)) -> KBStore:
         return KBStore(settings.kb_data_dir / user.id)
 
+    def get_probe_store(user: AuthUser = Depends(get_current_user)) -> ProbeStore:
+        return ProbeStore(settings.kb_data_dir, user.id)
+
     state = {"transcriber": transcriber}
 
     def get_transcriber():
@@ -186,6 +217,7 @@ def create_app(
     def create_note(
         audio: UploadFile = File(...),
         store: KBStore = Depends(get_user_store),
+        probe_store: ProbeStore = Depends(get_probe_store),
     ):
         tmp = _save_upload(audio)
         try:
@@ -220,6 +252,8 @@ def create_app(
                 update, source=f"voice-note:{audio.filename}", transcript=result.text
             )
             slugs, changes = _persist_store(store, entries)
+            if _kb_updated(changes):
+                _maybe_generate_probe(store, probe_store, extractor, prompts)
             return _ingest_response(
                 transcript=result.text,
                 language=result.language,
@@ -242,6 +276,7 @@ def create_app(
     def upload_cv(
         document: UploadFile = File(...),
         store: KBStore = Depends(get_user_store),
+        probe_store: ProbeStore = Depends(get_probe_store),
     ):
         tmp = _save_upload(document)
         try:
@@ -264,6 +299,8 @@ def create_app(
                 )
             kb_entries = cv_to_entries(profile, source=f"cv:{document.filename}")
             slugs, changes = _persist_store(store, kb_entries)
+            if _kb_updated(changes):
+                _maybe_generate_probe(store, probe_store, extractor, prompts)
             return _ingest_response(
                 name=profile.name,
                 entries=slugs,
@@ -284,6 +321,7 @@ def create_app(
     def upload_text_note(
         document: UploadFile = File(...),
         store: KBStore = Depends(get_user_store),
+        probe_store: ProbeStore = Depends(get_probe_store),
     ):
         if not (document.filename or "").lower().endswith(".txt"):
             raise HTTPException(status_code=422, detail="Only .txt files are supported here")
@@ -309,6 +347,8 @@ def create_app(
                 )
             entries = update_to_entries(update, source=f"text-note:{document.filename}")
             slugs, changes = _persist_store(store, entries)
+            if _kb_updated(changes):
+                _maybe_generate_probe(store, probe_store, extractor, prompts)
             return _ingest_response(
                 entries=slugs,
                 changes=changes,
@@ -325,10 +365,13 @@ def create_app(
     def ingest_github(
         request: GitHubIngestRequest,
         store: KBStore = Depends(get_user_store),
+        probe_store: ProbeStore = Depends(get_probe_store),
     ):
         profile = GitHubClient(token=settings.github_token).fetch_profile(request.username)
         kb_entries = github_to_entries(profile)
         slugs, changes = _persist_store(store, kb_entries)
+        if _kb_updated(changes):
+            _maybe_generate_probe(store, probe_store, extractor, prompts)
         return _ingest_response(
             username=profile.username,
             repos=len(profile.repos),
@@ -348,12 +391,15 @@ def create_app(
     def ingest_linkedin(
         export: UploadFile = File(...),
         store: KBStore = Depends(get_user_store),
+        probe_store: ProbeStore = Depends(get_probe_store),
     ):
         tmp = _save_upload(export)
         try:
             profile = parse_linkedin_export(tmp)
             kb_entries = linkedin_to_entries(profile)
             slugs, changes = _persist_store(store, kb_entries)
+            if _kb_updated(changes):
+                _maybe_generate_probe(store, probe_store, extractor, prompts)
             return _ingest_response(
                 name=profile.name,
                 entries=slugs,
@@ -437,6 +483,52 @@ def create_app(
             raise HTTPException(status_code=404, detail=f"no prompt named {name!r}")
         prompts.set(name, request.content)
         return {"name": name, "content": prompts.get(name)}
+
+    @app.get("/api/probe")
+    def get_probe(
+        force: bool = False,
+        store: KBStore = Depends(get_user_store),
+        probe_store: ProbeStore = Depends(get_probe_store),
+    ):
+        if force:
+            _maybe_generate_probe(store, probe_store, extractor, prompts)
+        probe = probe_store.load()
+        if probe is None:
+            return Response(status_code=204)
+        probe_store.mark_served()
+        return {"question": probe.question, "context": probe.context, "related_entries": probe.related_entries}
+
+    @app.post("/api/probe/answer")
+    def answer_probe(
+        request: ProbeAnswerRequest,
+        store: KBStore = Depends(get_user_store),
+        probe_store: ProbeStore = Depends(get_probe_store),
+    ):
+        if not request.text.strip():
+            raise HTTPException(status_code=422, detail="Answer text is empty")
+        try:
+            update = extractor.extract(
+                request.text, ProfessionalUpdate, prompts.get(UPDATE_PROMPT)
+            )
+        except ExtractionError as exc:
+            raise HTTPException(status_code=502, detail=str(exc))
+        entries = update_to_entries(update, source="probe-answer")
+        slugs, changes = _persist_store(store, entries)
+        probe_store.clear()
+        if _kb_updated(changes):
+            _maybe_generate_probe(store, probe_store, extractor, prompts)
+        return _ingest_response(
+            entries=slugs,
+            changes=changes,
+            extraction_mode=settings.extractor_backend,
+        )
+
+    @app.post("/api/probe/skip")
+    def skip_probe(
+        probe_store: ProbeStore = Depends(get_probe_store),
+    ):
+        probe_store.clear()
+        return {"ok": True}
 
     app.mount("/", StaticFiles(directory=STATIC_DIR, html=True), name="static")
     return app

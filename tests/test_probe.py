@@ -96,3 +96,88 @@ class TestProbeStore:
         store.save(probe)
         store.clear()
         assert store.load() is None
+
+
+import json
+from pathlib import Path as _Path
+
+import pytest
+from fastapi.testclient import TestClient
+
+
+@pytest.fixture
+def app_client(tmp_path: _Path):
+    """Create a test app with fake extractor and a pre-populated KB."""
+    from resume_kb_server.app import create_app
+    from resume_kb_server.settings import Settings
+
+    settings = Settings(
+        kb_data_dir=tmp_path / "kb-data",
+        prompts_root=_Path(__file__).resolve().parent.parent / "prompts",
+        extractor_backend="fake",
+        auth_disabled=True,
+    )
+    app = create_app(settings=settings)
+    return TestClient(app)
+
+
+@pytest.fixture
+def app_client_with_probe(tmp_path: _Path):
+    """Create a test app with a pending probe already saved."""
+    from resume_kb_server.app import create_app
+    from resume_kb_server.settings import Settings
+
+    kb_data = tmp_path / "kb-data"
+    settings = Settings(
+        kb_data_dir=kb_data,
+        prompts_root=_Path(__file__).resolve().parent.parent / "prompts",
+        extractor_backend="fake",
+        auth_disabled=True,
+    )
+
+    # Pre-write a pending probe for the anonymous user (TEST_USER_ID = "test-user-id")
+    probe_dir = kb_data / "test-user-id" / ".kb"
+    probe_dir.mkdir(parents=True)
+    probe_data = {
+        "question": "What drives your interest in APIs?",
+        "context": "Your KB mentions FastAPI but not why you chose it.",
+        "related_entries": ["skill-fastapi"],
+        "generated_at": "2026-07-15T10:00:00+00:00",
+        "served": False,
+    }
+    (probe_dir / "pending_probe.json").write_text(json.dumps(probe_data))
+
+    app = create_app(settings=settings)
+    return TestClient(app)
+
+
+class TestProbeAPI:
+    def test_get_probe_returns_204_when_none(self, app_client):
+        resp = app_client.get("/api/probe")
+        assert resp.status_code == 204
+
+    def test_get_probe_returns_pending(self, app_client_with_probe):
+        resp = app_client_with_probe.get("/api/probe")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["question"] == "What drives your interest in APIs?"
+        assert data["context"] == "Your KB mentions FastAPI but not why you chose it."
+        assert "skill-fastapi" in data["related_entries"]
+
+    def test_post_probe_skip(self, app_client_with_probe):
+        resp = app_client_with_probe.post("/api/probe/skip")
+        assert resp.status_code == 200
+        assert resp.json() == {"ok": True}
+        # Probe is now cleared
+        resp2 = app_client_with_probe.get("/api/probe")
+        assert resp2.status_code == 204
+
+    def test_post_probe_answer(self, app_client_with_probe):
+        resp = app_client_with_probe.post(
+            "/api/probe/answer",
+            json={"text": "I chose FastAPI because of its speed and type safety."},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "changes" in data
+        assert "message" in data

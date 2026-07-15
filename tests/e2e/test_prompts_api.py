@@ -13,9 +13,11 @@ class _RecordingExtractor:
     def __init__(self, inner):
         self.inner = inner
         self.last_instructions = None
+        self.instructions_by_schema: dict = {}
 
     def extract(self, text, schema, instructions):
         self.last_instructions = instructions
+        self.instructions_by_schema[schema] = instructions
         return self.inner.extract(text, schema, instructions)
 
 
@@ -31,7 +33,7 @@ def setup(tmp_path, prompts_dir):
 def test_prompts_are_listable_and_readable(setup):
     client, _ = setup
     names = client.get("/api/prompts").json()["prompts"]
-    assert set(names) == {"cv_profile", "professional_update"}
+    assert {"cv_profile", "professional_update"}.issubset(set(names))
     content = client.get("/api/prompts/professional_update").json()["content"]
     assert "explicitly mentioned" in content
 
@@ -54,10 +56,13 @@ def test_edited_prompt_is_used_on_the_next_request(setup, tmp_path):
     doc.add_heading("Vivek Subramanian", level=1)
     cv = tmp_path / "cv.docx"
     doc.save(str(cv))
+    from doc_ingest import CVProfile
+
     with open(cv, "rb") as f:
         client.post("/api/documents", files={"document": ("cv.docx", f)})
-    assert extractor.last_instructions is not None
-    assert marker in extractor.last_instructions
+    cv_instructions = extractor.instructions_by_schema.get(CVProfile)
+    assert cv_instructions is not None
+    assert marker in cv_instructions
 
 
 def test_unknown_prompt_is_404(setup):
