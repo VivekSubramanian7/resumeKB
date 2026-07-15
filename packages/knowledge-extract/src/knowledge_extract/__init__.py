@@ -8,6 +8,7 @@ from knowledge_extract.extractors import (
 )
 from knowledge_extract.mapping import update_to_entries
 from knowledge_extract.probe import GapAnalysisProbeGenerator, ProbeGenerator, ProbeQuestion
+from knowledge_extract.probe_store import ProbeStore
 from knowledge_extract.prompts import PromptLibrary, PromptNotFound
 from knowledge_extract.schemas import ProfessionalUpdate, ProjectMention
 
@@ -20,6 +21,7 @@ __all__ = [
     "ProjectMention",
     "ProbeGenerator",
     "ProbeQuestion",
+    "ProbeStore",
     "PromptLibrary",
     "PromptNotFound",
     "StructuredExtractor",

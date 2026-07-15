@@ -58,3 +58,43 @@ class TestGapAnalysisProbeGenerator:
         )
         result = gen.generate([])
         assert result is None
+
+
+from pathlib import Path
+from knowledge_extract.probe_store import ProbeStore
+
+
+class TestProbeStore:
+    def test_save_and_load(self, tmp_path: Path):
+        store = ProbeStore(tmp_path, "user-123")
+        probe = ProbeQuestion(
+            question="Why Python?",
+            context="No origin story.",
+            related_entries=["skill-python"],
+        )
+        store.save(probe)
+        loaded = store.load()
+        assert loaded is not None
+        assert loaded.question == "Why Python?"
+        assert loaded.related_entries == ["skill-python"]
+
+    def test_load_returns_none_when_no_file(self, tmp_path: Path):
+        store = ProbeStore(tmp_path, "user-456")
+        assert store.load() is None
+
+    def test_mark_served_and_is_served(self, tmp_path: Path):
+        store = ProbeStore(tmp_path, "user-123")
+        probe = ProbeQuestion(question="Q?", context="C", related_entries=[])
+        store.save(probe)
+        assert store.is_served() is False
+        store.mark_served()
+        assert store.is_served() is True
+        # load still works after marking served
+        assert store.load() is not None
+
+    def test_clear_removes_probe(self, tmp_path: Path):
+        store = ProbeStore(tmp_path, "user-123")
+        probe = ProbeQuestion(question="Q?", context="C", related_entries=[])
+        store.save(probe)
+        store.clear()
+        assert store.load() is None
