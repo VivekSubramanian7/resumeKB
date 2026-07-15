@@ -91,7 +91,7 @@ export function UnifiedCaptureCard({
     <Card
       className="w-full border-[var(--border)] bg-[var(--surface-raised)] overflow-hidden animate-[probe-enter_0.35s_var(--ease-out-expo)]"
       style={{
-        boxShadow: "0 4px 6px -1px oklch(0 0 0 / 0.15), 0 12px 40px -4px var(--accent-glow), 0 0 0 1px var(--border-subtle)",
+        boxShadow: "var(--shadow-card), 0 0 0 1px var(--border-subtle)",
       }}
     >
       {/* Probe question */}
