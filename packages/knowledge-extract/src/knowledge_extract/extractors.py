@@ -43,6 +43,20 @@ class OpenAIStructuredExtractor:
             self._client = OpenAI(**kwargs)
         self._model = model
 
+    @staticmethod
+    def _strict_schema(schema: dict) -> dict:
+        """Recursively add additionalProperties:false to every object node."""
+        if schema.get("type") == "object":
+            schema.setdefault("additionalProperties", False)
+        for value in schema.values():
+            if isinstance(value, dict):
+                OpenAIStructuredExtractor._strict_schema(value)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        OpenAIStructuredExtractor._strict_schema(item)
+        return schema
+
     def extract(self, text: str, schema: type[T], instructions: str) -> T:
         import json
 
@@ -56,7 +70,7 @@ class OpenAIStructuredExtractor:
                 "type": "json_schema",
                 "json_schema": {
                     "name": schema.__name__,
-                    "schema": schema.model_json_schema(),
+                    "schema": self._strict_schema(schema.model_json_schema()),
                     "strict": True,
                 },
             },
