@@ -21,3 +21,6 @@ tests/
 
 start.bat
 tempCodeRunnerFile.py
+
+apps/web/node_modules
+apps/web/dist
