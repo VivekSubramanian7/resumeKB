@@ -1,6 +1,9 @@
 """Tests for probe question generation."""
 
+import json
+
 import pytest
+from fastapi.testclient import TestClient
 from pathlib import Path
 from pydantic import BaseModel
 
@@ -98,22 +101,15 @@ class TestProbeStore:
         assert store.load() is None
 
 
-import json
-from pathlib import Path as _Path
-
-import pytest
-from fastapi.testclient import TestClient
-
-
 @pytest.fixture
-def app_client(tmp_path: _Path):
+def app_client(tmp_path: Path):
     """Create a test app with fake extractor and a pre-populated KB."""
     from resume_kb_server.app import create_app
     from resume_kb_server.settings import Settings
 
     settings = Settings(
         kb_data_dir=tmp_path / "kb-data",
-        prompts_root=_Path(__file__).resolve().parent.parent / "prompts",
+        prompts_root=Path(__file__).resolve().parent.parent / "prompts",
         extractor_backend="fake",
         auth_disabled=True,
     )
@@ -122,7 +118,7 @@ def app_client(tmp_path: _Path):
 
 
 @pytest.fixture
-def app_client_with_probe(tmp_path: _Path):
+def app_client_with_probe(tmp_path: Path):
     """Create a test app with a pending probe already saved."""
     from resume_kb_server.app import create_app
     from resume_kb_server.settings import Settings
@@ -130,7 +126,7 @@ def app_client_with_probe(tmp_path: _Path):
     kb_data = tmp_path / "kb-data"
     settings = Settings(
         kb_data_dir=kb_data,
-        prompts_root=_Path(__file__).resolve().parent.parent / "prompts",
+        prompts_root=Path(__file__).resolve().parent.parent / "prompts",
         extractor_backend="fake",
         auth_disabled=True,
     )
