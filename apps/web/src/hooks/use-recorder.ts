@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 interface RecorderState {
   isRecording: boolean;
   elapsed: number;
+  analyser: AnalyserNode | null;
   start: () => void;
   stop: () => Promise<Blob | null>;
 }
@@ -10,7 +11,9 @@ interface RecorderState {
 export function useRecorder(maxSeconds: number): RecorderState {
   const [isRecording, setIsRecording] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const mediaRecorder = useRef<MediaRecorder | null>(null);
+  const audioContext = useRef<AudioContext | null>(null);
   const chunks = useRef<Blob[]>([]);
   const timerRef = useRef<number | null>(null);
   const resolveStop = useRef<((blob: Blob | null) => void) | null>(null);
@@ -40,9 +43,22 @@ export function useRecorder(maxSeconds: number): RecorderState {
     setElapsed(0);
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+
+    const ctx = new AudioContext();
+    const source = ctx.createMediaStreamSource(stream);
+    const analyserNode = ctx.createAnalyser();
+    analyserNode.fftSize = 1024;
+    analyserNode.smoothingTimeConstant = 0.6;
+    source.connect(analyserNode);
+    audioContext.current = ctx;
+    setAnalyser(analyserNode);
+
     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.current.push(e.data); };
     recorder.onstop = () => {
       stream.getTracks().forEach((t) => t.stop());
+      audioContext.current?.close();
+      audioContext.current = null;
+      setAnalyser(null);
       setIsRecording(false);
       const blob = new Blob(chunks.current, { type: "audio/webm" });
       resolveStop.current?.(blob);
@@ -64,5 +80,5 @@ export function useRecorder(maxSeconds: number): RecorderState {
     });
   }, []);
 
-  return { isRecording, elapsed, start, stop };
+  return { isRecording, elapsed, analyser, start, stop };
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { InlineRecordButton } from "./InlineRecordButton";
 import { SourcePopover } from "./SourcePopover";
+import { Waveform } from "./Waveform";
 import { useRecorder } from "@/hooks/use-recorder";
 import * as api from "@/lib/api";
 
@@ -42,7 +43,7 @@ export function UnifiedCaptureCard({
   onLinkedIn,
   onTextFile,
 }: UnifiedCaptureCardProps) {
-  const { isRecording, elapsed, start, stop } = useRecorder(maxNoteSeconds);
+  const { isRecording, elapsed, analyser, start, stop } = useRecorder(maxNoteSeconds);
   const [text, setText] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
@@ -119,7 +120,8 @@ export function UnifiedCaptureCard({
       {/* Textarea / Recording display */}
       <div className="px-5 py-4 min-h-[120px] flex items-start">
         {isRecording ? (
-          <div className="flex flex-col items-center justify-center w-full gap-2 py-4">
+          <div className="flex flex-col items-center justify-center w-full gap-1 py-2">
+            <Waveform analyser={analyser} width={280} height={56} />
             <div className="flex items-center gap-2">
               <Microphone theme="outline" size={16} strokeWidth={3} className="text-[var(--warm)]" />
               <span className="text-[1rem] font-medium text-[var(--ink)] tabular-nums">
@@ -129,7 +131,6 @@ export function UnifiedCaptureCard({
                 / {formatTime(maxNoteSeconds)}
               </span>
             </div>
-            <p className="text-[0.75rem] text-[var(--ink-dim)]">Recording…</p>
           </div>
         ) : (
           <Textarea
