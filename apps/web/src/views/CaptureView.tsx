@@ -4,8 +4,15 @@ import { UnifiedCaptureCard } from "@/components/UnifiedCaptureCard";
 import { Button } from "@/components/ui/button";
 import * as api from "@/lib/api";
 
+interface ProbeData {
+  question: string;
+  context: string;
+  related_entries: string[];
+}
+
 interface CaptureViewProps {
   probeVisible: boolean;
+  probeData: ProbeData | null;
   onProbeTrigger: () => void;
   onProbeDismiss: () => void;
   maxNoteSeconds: number;
@@ -17,15 +24,24 @@ const HINT_CHIPS = [
   { label: "Answer a probe", action: "probe" as const },
 ];
 
-export function CaptureView({ probeVisible, onProbeTrigger, onProbeDismiss, maxNoteSeconds }: CaptureViewProps) {
+export function CaptureView({ probeVisible, probeData, onProbeTrigger, onProbeDismiss, maxNoteSeconds }: CaptureViewProps) {
   const [githubDialogOpen, setGithubDialogOpen] = useState(false);
   const [githubUsername, setGithubUsername] = useState("");
   const [hintHovered, setHintHovered] = useState<string | null>(null);
   const cvRef = useRef<HTMLInputElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const handleSaveProbe = (_answer: string) => {
-    toast.success("Answer saved");
+  const handleSaveProbe = (answer: string) => {
+    api.post("/api/probe/answer", { text: answer })
+      .then((r) => {
+        toast.success((r as { message: string }).message);
+        onProbeDismiss();
+      })
+      .catch((e) => toast.error(e instanceof Error ? e.message : "Failed to save answer"));
+  };
+
+  const handleSkipProbe = () => {
+    api.post("/api/probe/skip").catch(() => {});
     onProbeDismiss();
   };
 
@@ -83,10 +99,10 @@ export function CaptureView({ probeVisible, onProbeTrigger, onProbeDismiss, maxN
     <div className="flex flex-col items-center gap-8 w-full animate-[probe-enter_0.4s_var(--ease-out-expo)]">
       <UnifiedCaptureCard
         probeVisible={probeVisible}
-        probeQuestion="What made you choose FastAPI over Django or Flask for this project?"
-        probeContext='This connects your "resumeKB" project with "Python" and "API Design" skills.'
+        probeQuestion={probeData?.question ?? ""}
+        probeContext={probeData?.context ?? ""}
         onProbeSave={handleSaveProbe}
-        onProbeSkip={onProbeDismiss}
+        onProbeSkip={handleSkipProbe}
         onProbeTrigger={onProbeTrigger}
         maxNoteSeconds={maxNoteSeconds}
         onUploadCV={handleUploadCV}

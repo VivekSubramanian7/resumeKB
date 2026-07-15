@@ -6,7 +6,14 @@ import { Toaster } from "@/components/ui/sonner";
 import { CaptureView } from "./views/CaptureView";
 import { KnowledgeView } from "./views/KnowledgeView";
 import { useAuth } from "./hooks/use-auth";
+import * as api from "@/lib/api";
 import "./index.css";
+
+interface ProbeData {
+  question: string;
+  context: string;
+  related_entries: string[];
+}
 
 type Tab = "capture" | "knowledge";
 type Theme = "light" | "dark" | "system";
@@ -17,7 +24,8 @@ function getInitialTheme(): Theme {
 
 export function App() {
   const [activeTab, setActiveTab] = useState<Tab>("capture");
-  const [probeVisible, setProbeVisible] = useState(true);
+  const [probeVisible, setProbeVisible] = useState(false);
+  const [probeData, setProbeData] = useState<ProbeData | null>(null);
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const { user, loading, authRequired, maxNoteSeconds, signIn, signUp } = useAuth();
 
@@ -30,6 +38,25 @@ export function App() {
     }
     localStorage.setItem("theme", theme);
   }, [theme]);
+
+  useEffect(() => {
+    if (loading) return;
+    if (authRequired && !user) return;
+    if (sessionStorage.getItem("probe-shown") === "true") return;
+    api.get<ProbeData>("/api/probe")
+      .then((data) => {
+        setProbeData(data);
+        setProbeVisible(true);
+        sessionStorage.setItem("probe-shown", "true");
+      })
+      .catch(() => {});
+  }, [loading, authRequired, user]);
+
+  function handleProbeTrigger() {
+    api.get<ProbeData>("/api/probe?force=true")
+      .then((data) => { setProbeData(data); setProbeVisible(true); })
+      .catch(() => {});
+  }
 
   function handleThemeToggle() {
     setTheme(prev => {
@@ -82,7 +109,8 @@ export function App() {
           {activeTab === "capture" && (
             <CaptureView
               probeVisible={probeVisible}
-              onProbeTrigger={() => setProbeVisible(true)}
+              probeData={probeData}
+              onProbeTrigger={handleProbeTrigger}
               onProbeDismiss={() => setProbeVisible(false)}
               maxNoteSeconds={maxNoteSeconds}
             />
