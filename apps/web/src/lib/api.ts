@@ -12,6 +12,7 @@ function headers(): HeadersInit {
 
 export async function get<T = unknown>(path: string): Promise<T> {
   const res = await fetch(path, { headers: headers() });
+  if (res.status === 204) throw new Error("204");
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
