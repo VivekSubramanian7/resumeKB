@@ -58,19 +58,26 @@ export function App() {
     <div className="relative min-h-dvh flex flex-col">
       {/* Ambient orbs */}
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
-        <div className="ambient-orb orb-primary w-[500px] h-[500px] -top-[150px] -right-[100px] absolute" style={{ animationDelay: "-5s" }} />
-        <div className="ambient-orb orb-secondary w-[350px] h-[350px] -bottom-[80px] -left-[50px] absolute" style={{ animationDelay: "-10s", animationDuration: "25s" }} />
+        <div className="ambient-orb orb-primary w-[600px] h-[600px] -top-[180px] -right-[120px] absolute" style={{ animationDelay: "-5s" }} />
+        <div className="ambient-orb orb-secondary w-[450px] h-[450px] -bottom-[100px] -left-[80px] absolute" style={{ animationDelay: "-10s", animationDuration: "25s" }} />
       </div>
 
       <div className="relative z-[1] flex flex-col min-h-dvh">
         <Header
           username={user?.email?.split("@")[0] ?? "local"}
           theme={resolvedTheme}
+          activeTab={activeTab}
           onThemeToggle={handleThemeToggle}
+          onTabChange={setActiveTab}
         />
 
+        {/* Vertically centered capture, natural flow for knowledge */}
         <main
-          className={`flex-1 w-full mx-auto px-6 pb-28 ${activeTab === "capture" ? "max-w-[560px] pt-8" : "max-w-[640px] pt-8"}`}
+          className={`flex-1 w-full mx-auto px-6 ${
+            activeTab === "capture"
+              ? "max-w-[560px] flex flex-col justify-center py-8 pb-16 md:pb-8"
+              : "max-w-[640px] pt-8 pb-16 md:pb-8"
+          }`}
         >
           {activeTab === "capture" && (
             <CaptureView
@@ -83,6 +90,7 @@ export function App() {
           {activeTab === "knowledge" && <KnowledgeView />}
         </main>
 
+        {/* Mobile-only bottom nav */}
         <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 

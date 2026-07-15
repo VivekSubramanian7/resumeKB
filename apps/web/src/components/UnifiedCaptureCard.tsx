@@ -88,8 +88,13 @@ export function UnifiedCaptureCard({
   const canSend = text.trim().length > 0 && !isRecording && !isUploading;
 
   return (
-    <Card className="w-full border-[var(--border-subtle)] bg-[var(--surface-raised)] overflow-hidden">
-      {/* Probe question section */}
+    <Card
+      className="w-full border-[var(--border)] bg-[var(--surface-raised)] overflow-hidden animate-[probe-enter_0.35s_var(--ease-out-expo)]"
+      style={{
+        boxShadow: "0 4px 6px -1px oklch(0 0 0 / 0.15), 0 12px 40px -4px var(--accent-glow), 0 0 0 1px var(--border-subtle)",
+      }}
+    >
+      {/* Probe question */}
       {probeVisible && (
         <div className="px-5 pt-5 pb-0 animate-[probe-enter_0.4s_var(--ease-out-expo)]">
           <p className="font-[var(--font-display)] text-[1.25rem] font-normal italic leading-[1.35] text-[var(--ink)]">
@@ -124,20 +129,25 @@ export function UnifiedCaptureCard({
                 / {formatTime(maxNoteSeconds)}
               </span>
             </div>
-            <p className="text-[0.75rem] text-[var(--ink-dim)]">Recording...</p>
+            <p className="text-[0.75rem] text-[var(--ink-dim)]">Recording…</p>
           </div>
         ) : (
           <Textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={probeVisible ? "Type or speak your answer..." : "Speak or type a note..."}
-            className="min-h-[80px] border-none shadow-none resize-none bg-transparent text-[var(--ink)] placeholder:text-[var(--ink-dim)] focus-visible:ring-0 p-0 text-[1rem]"
+            placeholder={probeVisible ? "Type or speak your answer…" : "Speak or type a note…"}
+            onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) handleSend(); }}
+            className="min-h-[80px] border-none shadow-none resize-none bg-transparent text-[var(--ink)] placeholder:text-[var(--ink-dim)] p-0 text-[1rem] outline-none focus-visible:ring-0 transition-[box-shadow] duration-200"
+            style={{
+              // ponytail: native box-shadow for glow since Tailwind ring bleeds outside card overflow:hidden
+              boxShadow: text.length > 0 ? "none" : undefined,
+            }}
           />
         )}
       </div>
 
-      {/* Action bar */}
-      <div className="flex items-center gap-2 px-5 py-3 border-t border-[var(--border-subtle)] bg-[var(--surface)]">
+      {/* Action bar — hairline top only, no background fill */}
+      <div className="flex items-center gap-2 px-4 py-2.5 border-t border-[var(--border-subtle)]">
         <SourcePopover
           onUploadCV={onUploadCV}
           onGitHub={onGitHub}
@@ -151,26 +161,34 @@ export function UnifiedCaptureCard({
             size="icon"
             onClick={onProbeTrigger}
             disabled={probeVisible}
-            className="relative w-8 h-8 rounded-full border border-[var(--border-subtle)] text-[var(--ink-dim)] hover:text-[var(--accent)] hover:border-[var(--accent)] disabled:opacity-40 transition-colors"
+            className="relative w-8 h-8 rounded-full border border-[var(--border-subtle)] text-[var(--ink-dim)] hover:text-[var(--accent)] hover:border-[var(--accent)] disabled:opacity-40 transition-colors duration-200"
             aria-label="Answer a probe question"
+            title="Answer a probe question"
           >
             <Brain theme="outline" size={15} strokeWidth={3} />
             {!probeVisible && (
-              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--warm)] border-2 border-[var(--surface)]" />
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[var(--warm)] border-2 border-[var(--surface-raised)]" />
             )}
           </Button>
+
           <InlineRecordButton
             isRecording={isRecording}
             onToggle={handleRecord}
             disabled={isUploading}
           />
+
+          {/* Send — accent color only when active, dim when not */}
           <Button
             variant="ghost"
             size="icon"
             disabled={!canSend}
             onClick={handleSend}
-            className="w-8 h-8 rounded-full text-[var(--accent)] disabled:opacity-30 hover:bg-[var(--accent-soft)]"
+            className="w-8 h-8 rounded-full transition-all duration-200 hover:bg-[var(--accent-soft)]"
+            style={{
+              color: canSend ? "var(--accent)" : "var(--ink-dim)",
+            }}
             aria-label="Send"
+            title="Send (⌘↵)"
           >
             <Send theme="outline" size={16} strokeWidth={3} />
           </Button>

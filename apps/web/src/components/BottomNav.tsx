@@ -9,7 +9,7 @@ interface BottomNavProps {
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-10 flex justify-center gap-8 px-6 py-3 border-t border-[var(--border-subtle)] bg-[var(--bg)]/90 backdrop-blur-xl">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-10 flex justify-center gap-8 px-6 py-3 border-t border-[var(--border-subtle)] bg-[var(--bg)]/90 backdrop-blur-xl">
       <button
         onClick={() => onTabChange("capture")}
         className={`flex flex-col items-center gap-1 px-5 py-1.5 rounded-lg text-xs transition-colors ${
