@@ -219,3 +219,11 @@ __marimo__/
 .streamlit/secrets.toml
 .claude/
 !apps/web/src/lib/
+.playwright-mcp/
+.impeccable/
+.serena/
+
+# Frontend build artifacts
+apps/web/dist/
+apps/server/src/resume_kb_server/static/*
+!apps/server/src/resume_kb_server/static/.gitkeep
