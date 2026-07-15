@@ -252,4 +252,4 @@ class TestProbeLifecycle:
         # Old probe is cleared; fake extractor generates a new one immediately
         resp = app_client_with_probe.get("/api/probe")
         assert resp.status_code == 200
-        assert resp.json()["question"] != "What drives your interest in APIs?"
+        assert resp.json()["question"] == "What motivated you to start your career in software?"
