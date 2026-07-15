@@ -1,11 +1,13 @@
 """Tests for probe question generation."""
 
 import pytest
+from pathlib import Path
 from pydantic import BaseModel
 
 from kb_core import KBEntry
 from knowledge_extract import FakeStructuredExtractor
 from knowledge_extract.probe import GapAnalysisProbeGenerator, ProbeQuestion
+from knowledge_extract.probe_store import ProbeStore
 
 
 class FakePromptLibrary:
@@ -58,10 +60,6 @@ class TestGapAnalysisProbeGenerator:
         )
         result = gen.generate([])
         assert result is None
-
-
-from pathlib import Path
-from knowledge_extract.probe_store import ProbeStore
 
 
 class TestProbeStore:
