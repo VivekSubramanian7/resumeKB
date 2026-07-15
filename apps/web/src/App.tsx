@@ -115,9 +115,9 @@ export function App() {
 
         {/* Vertically centered capture, natural flow for knowledge */}
         <main
-          className={`flex-1 w-full mx-auto px-6 ${
+          className={`flex-1 w-full mx-auto px-6 transition-[max-width] duration-300 ${
             activeTab === "capture"
-              ? "max-w-[560px] flex flex-col justify-center py-8 pb-16 md:pb-8"
+              ? `${probeVisible ? "max-w-[720px]" : "max-w-[560px]"} flex flex-col justify-center py-8 pb-16 md:pb-8`
               : "max-w-[640px] pt-8 pb-16 md:pb-8"
           }`}
         >

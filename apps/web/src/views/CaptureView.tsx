@@ -109,12 +109,40 @@ export function CaptureView({ probeVisible, probeData, onProbeTrigger, onProbeDi
 
   return (
     <div className="flex flex-col items-center gap-8 w-full animate-[probe-enter_0.4s_var(--ease-out-expo)]">
+      {/* Probe question — editorial blockquote style: left-aligned, landscape measure */}
+      {probeVisible && probeData && (
+        <div
+          key={probeData.question}
+          className="w-full animate-[probe-enter_0.45s_var(--ease-out-expo)]"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--warm)]" />
+            <span className="text-[0.6875rem] font-medium uppercase tracking-[0.12em] text-[var(--ink-dim)]">
+              Probe question
+            </span>
+          </div>
+          <blockquote className="border-l-2 border-[var(--accent)] pl-4">
+            <p className="font-[var(--font-display)] text-[1.1875rem] font-normal leading-[1.55] text-[var(--ink)] max-w-[62ch]">
+              {probeData.question}
+            </p>
+          </blockquote>
+          <div className="flex items-baseline justify-between gap-4 mt-3 pl-4">
+            <p className="text-[0.75rem] text-[var(--ink-dim)] max-w-[52ch] leading-relaxed">
+              {probeData.context}
+            </p>
+            <button
+              onClick={handleSkipProbe}
+              className="shrink-0 text-[0.75rem] text-[var(--ink-dim)] hover:text-[var(--ink-muted)] transition-colors duration-150 underline underline-offset-4 decoration-[var(--border)]"
+            >
+              Skip
+            </button>
+          </div>
+        </div>
+      )}
+
       <UnifiedCaptureCard
         probeVisible={probeVisible}
-        probeQuestion={probeData?.question ?? ""}
-        probeContext={probeData?.context ?? ""}
         onProbeSave={handleSaveProbe}
-        onProbeSkip={handleSkipProbe}
         onProbeTrigger={onProbeTrigger}
         maxNoteSeconds={maxNoteSeconds}
         onUploadCV={handleUploadCV}

@@ -12,10 +12,7 @@ import * as api from "@/lib/api";
 
 interface UnifiedCaptureCardProps {
   probeVisible: boolean;
-  probeQuestion: string;
-  probeContext: string;
   onProbeSave: (answer: string) => void;
-  onProbeSkip: () => void;
   onProbeTrigger: () => void;
   maxNoteSeconds: number;
   onUploadCV: (file: File) => void;
@@ -33,10 +30,7 @@ function formatTime(seconds: number): string {
 
 export function UnifiedCaptureCard({
   probeVisible,
-  probeQuestion,
-  probeContext,
   onProbeSave,
-  onProbeSkip,
   onProbeTrigger,
   maxNoteSeconds,
   onUploadCV,
@@ -101,28 +95,6 @@ export function UnifiedCaptureCard({
         boxShadow: "var(--shadow-card), 0 0 0 1px var(--border-subtle)",
       }}
     >
-      {/* Probe question */}
-      {probeVisible && (
-        <div className="px-5 pt-5 pb-0 animate-[probe-enter_0.4s_var(--ease-out-expo)]">
-          <p className="font-[var(--font-display)] text-[1.25rem] font-normal italic leading-[1.35] text-[var(--ink)]">
-            {probeQuestion}
-          </p>
-          <p className="text-[0.75rem] text-[var(--ink-muted)] mt-1">
-            {probeContext}
-          </p>
-          <div className="flex items-center justify-end mt-2">
-            <Button
-              variant="ghost"
-              onClick={onProbeSkip}
-              className="text-[0.75rem] text-[var(--ink-dim)] h-6 px-2"
-            >
-              Skip
-            </Button>
-          </div>
-          <div className="mt-3 border-t border-[var(--border-subtle)]" />
-        </div>
-      )}
-
       {/* Textarea / Recording display */}
       <div className="px-5 py-4 min-h-[120px] flex items-start">
         {isRecording ? (
