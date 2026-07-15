@@ -1,4 +1,12 @@
-# resumeKB — Railway-ready image with faster-whisper small.en baked in.
+# ── Stage 1: Build React frontend ──
+FROM node:20-alpine AS web-build
+WORKDIR /app
+COPY apps/web/package.json apps/web/package-lock.json ./
+RUN npm ci
+COPY apps/web/ ./
+RUN npm run build
+
+# ── Stage 2: Python runtime ──
 FROM python:3.11-slim-bookworm
 
 RUN apt-get update \
@@ -22,10 +30,13 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 COPY pyproject.toml uv.lock ./
 COPY packages/ packages/
-COPY apps/ apps/
+COPY apps/server/ apps/server/
 COPY prompts/ prompts/
 COPY scripts/cache_whisper_model.py scripts/cache_whisper_model.py
 COPY scripts/docker-entrypoint.sh scripts/docker-entrypoint.sh
+
+# Copy built frontend into server static dir
+COPY --from=web-build /app/dist/ apps/server/src/resume_kb_server/static/
 
 RUN uv sync --frozen --no-dev \
     && chmod +x scripts/docker-entrypoint.sh
