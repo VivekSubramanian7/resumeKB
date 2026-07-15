@@ -16,28 +16,58 @@ Reusable packages (each usable independently in other projects):
 |---|---|---|
 | `kb-core` | OKF markdown entries, store, FTS5 search, index page | PyYAML, SQLite FTS5 |
 | `voice-transcribe` | Duration limits + local transcription | PyAV, faster-whisper |
-| `knowledge-extract` | Structured extraction behind a protocol + editable prompt library | OpenAI `responses.parse`, Pydantic |
+| `knowledge-extract` | Structured extraction behind a protocol + editable prompt library, **probe generation** | OpenAI `responses.parse`, Pydantic |
 | `doc-ingest` | PDF/DOCX → markdown + CV profile mapping | markitdown |
 | `profile-ingest` | GitHub REST + LinkedIn data-export ZIP | httpx, stdlib zip/csv |
 
-`apps/server` (FastAPI) composes them and serves the static frontend.
+`apps/server` (FastAPI) composes them and serves the React frontend (`apps/web`). The frontend is pre-built into `apps/web/dist` during the Docker image build; for local dev the Vite dev server runs separately (see below).
 
 ## Prompts — you control the extraction
 
-The instructions sent to OpenAI live in `prompts/professional_update.md` and
-`prompts/cv_profile.md`. Edit them in any editor (or the in-app "Extraction
-prompts" panel) — changes apply on the next request, no restart.
+The instructions sent to OpenAI live in `prompts/`. Edit any file in a text editor — changes apply on the next request, no restart.
+
+| File | Used for |
+|---|---|
+| `professional_update.md` | Voice notes and text snippets |
+| `cv_profile.md` | CV (PDF/DOCX) ingestion |
+| `probe_generation.md` | Gap-analysis probe question generation |
+
+## Probe questions
+
+After each ingest the server runs **gap analysis** on your knowledge base and surfaces a follow-up question ("probe") in the capture UI. Answer it like a normal note — the answer is extracted and merged into the KB. Skip it to discard. Probes are generated best-effort: if the prompt file is missing or the extractor is faked, no probe appears.
+
+The probe prompt (`prompts/probe_generation.md`) is editable like the others. The current probe is stored per-user at `{KB_DATA_DIR}/{user_id}/.probe.json` and cleared once answered or skipped.
 
 ## Run
 
+### Docker (recommended)
+
+```bash
+docker build -t resumekb .
+docker run -p 8137:8137 --env-file .env resumekb
+```
+
+The image pre-builds the React frontend and bakes in the `small.en` Whisper model.
+
+### Local dev
+
 ```powershell
 uv sync
-cp .env.example .env   # then edit OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, etc.
+cp .env.example .env   # edit OPENAI_API_KEY, SUPABASE_URL, SUPABASE_ANON_KEY, etc.
 uv run uvicorn --factory resume_kb_server.app:create_app --port 8137
 ```
 
-Open http://127.0.0.1:8137. Set `KB_EXTRACTOR=fake` in `.env` to run fully
-offline with canned extraction (no API key needed).
+For frontend hot-reload, run the Vite dev server in a second terminal:
+
+```powershell
+cd apps/web
+pnpm install
+pnpm dev          # proxies /api to :8137 automatically
+```
+
+Open http://127.0.0.1:5173 (Vite) or http://127.0.0.1:8137 (served build).
+
+Set `KB_EXTRACTOR=fake` in `.env` to run fully offline with canned extraction (no API key needed).
 
 Set `AUTH_DISABLED=true` to skip login during local development or E2E tests.
 
