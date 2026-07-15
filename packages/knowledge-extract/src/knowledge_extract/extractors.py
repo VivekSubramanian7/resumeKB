@@ -45,9 +45,12 @@ class OpenAIStructuredExtractor:
 
     @staticmethod
     def _strict_schema(schema: dict) -> dict:
-        """Recursively add additionalProperties:false to every object node."""
+        """Recursively enforce OpenAI strict-mode requirements on every object node."""
         if schema.get("type") == "object":
             schema.setdefault("additionalProperties", False)
+            props = schema.get("properties", {})
+            if props:
+                schema["required"] = list(props.keys())
         for value in schema.values():
             if isinstance(value, dict):
                 OpenAIStructuredExtractor._strict_schema(value)
