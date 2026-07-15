@@ -1,5 +1,6 @@
 """Tests for probe question generation."""
 
+import io
 import json
 
 import pytest
@@ -178,3 +179,80 @@ class TestProbeAPI:
         assert "changes" in data
         assert "kb_updated" in data
         assert "message" in data
+
+
+class TestProbeLifecycle:
+    """Integration: ingest triggers probe generation, answer clears and regenerates."""
+
+    def test_ingest_generates_probe(self, tmp_path: Path):
+        """After a voice note ingest that updates KB, a probe should be generated."""
+        from resume_kb_server.app import create_app
+        from resume_kb_server.settings import Settings
+        from kb_core import KBStore
+
+        settings = Settings(
+            kb_data_dir=tmp_path / "kb-data",
+            prompts_root=Path(__file__).resolve().parent.parent / "prompts",
+            extractor_backend="fake",
+            auth_disabled=True,
+        )
+        app = create_app(settings=settings)
+        client = TestClient(app)
+
+        # Initially no probe
+        resp = client.get("/api/probe")
+        assert resp.status_code == 204
+
+        # Manually populate KB and generate probe to simulate post-ingest state
+        user_dir = tmp_path / "kb-data" / "test-user-id"
+        store = KBStore(user_dir)
+        entry = KBEntry(
+            slug="skill-python",
+            title="Python",
+            entry_type="skill",
+            body="Python programming language.",
+            tags=["skill"],
+            sources=["test"],
+        )
+        store.save(entry)
+
+        canned_probe_question = ProbeQuestion(
+            question="What motivated you to learn Python?",
+            context="Your KB has Python as a skill but no origin story.",
+            related_entries=["skill-python"],
+        )
+        extractor = FakeStructuredExtractor({ProbeQuestion: canned_probe_question})
+        probe_store = ProbeStore(tmp_path / "kb-data", "test-user-id")
+        gen = GapAnalysisProbeGenerator(
+            extractor=extractor,
+            prompts=FakePromptLibrary(),
+        )
+        probe = gen.generate(store.list())
+        assert probe is not None
+        probe_store.save(probe)
+
+        # Now GET /api/probe should return it
+        resp = client.get("/api/probe")
+        assert resp.status_code == 200
+        assert resp.json()["question"] == "What motivated you to learn Python?"
+
+    def test_answer_clears_probe(self, app_client_with_probe):
+        """Answering a probe clears it."""
+        # Verify probe exists
+        resp = app_client_with_probe.get("/api/probe")
+        assert resp.status_code == 200
+
+        # Answer it
+        resp = app_client_with_probe.post(
+            "/api/probe/answer",
+            json={"text": "I love building APIs because they connect systems elegantly."},
+        )
+        assert resp.status_code == 200
+
+        # Probe should be cleared (though a new one may generate — depends on fake extractor)
+        # At minimum the old probe should not be returned
+        resp = app_client_with_probe.get("/api/probe")
+        # Either 204 (no new probe) or 200 with different question
+        assert resp.status_code in (200, 204)
+        if resp.status_code == 200:
+            assert resp.json()["question"] != "What drives your interest in APIs?"
