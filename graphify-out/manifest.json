@@ -1,8 +1,8 @@
 {
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\server\\src\\resume_kb_server\\app.py": {
-    "mtime": 1783924611.8266957,
-    "ast_hash": "64a3fc7375190cbdd9f2d856352948d3",
-    "semantic_hash": "64a3fc7375190cbdd9f2d856352948d3"
+    "mtime": 1784107133.9044695,
+    "ast_hash": "5c60f21f5d2d87688acea395fa45fc4c",
+    "semantic_hash": "5c60f21f5d2d87688acea395fa45fc4c"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\server\\src\\resume_kb_server\\auth.py": {
     "mtime": 1783924611.8286886,
@@ -10,34 +10,24 @@
     "semantic_hash": "254f3df28296b0de24fb8eff0b7ae99b"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\server\\src\\resume_kb_server\\fakes.py": {
-    "mtime": 1783924611.8306966,
-    "ast_hash": "6ca531f801c9448d4ad7f7f8810bd1fa",
-    "semantic_hash": "6ca531f801c9448d4ad7f7f8810bd1fa"
+    "mtime": 1784107498.7145114,
+    "ast_hash": "c2340629ba1d54f86df81d76a5534d53",
+    "semantic_hash": "c2340629ba1d54f86df81d76a5534d53"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\server\\src\\resume_kb_server\\settings.py": {
-    "mtime": 1783924611.8326375,
-    "ast_hash": "508b183405a3e26c99457ecc66034c6c",
-    "semantic_hash": "508b183405a3e26c99457ecc66034c6c"
+    "mtime": 1783952842.0023117,
+    "ast_hash": "8412dfc980f334f0ac92e7a6dbc361b7",
+    "semantic_hash": "8412dfc980f334f0ac92e7a6dbc361b7"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\server\\src\\resume_kb_server\\__init__.py": {
     "mtime": 1783924611.8236423,
     "ast_hash": "7821f17111f14c7a8e97cb853a7ad767",
     "semantic_hash": "7821f17111f14c7a8e97cb853a7ad767"
   },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\server\\src\\resume_kb_server\\static\\app.js": {
-    "mtime": 1783924611.8346982,
-    "ast_hash": "57ae3f90941912208e79257612423ea8",
-    "semantic_hash": "57ae3f90941912208e79257612423ea8"
-  },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\server\\src\\resume_kb_server\\static\\auth.js": {
-    "mtime": 1783924611.8366866,
-    "ast_hash": "5a0864ddf43a97808b5779851262818c",
-    "semantic_hash": "5a0864ddf43a97808b5779851262818c"
-  },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\packages\\doc-ingest\\src\\doc_ingest\\convert.py": {
-    "mtime": 1783924611.8547423,
-    "ast_hash": "8a0818172ccb7b8cd984dce0bd8cc5e9",
-    "semantic_hash": "8a0818172ccb7b8cd984dce0bd8cc5e9"
+    "mtime": 1783946027.1169052,
+    "ast_hash": "849df4159823261120914cc88043c0c4",
+    "semantic_hash": "849df4159823261120914cc88043c0c4"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\packages\\doc-ingest\\src\\doc_ingest\\cv.py": {
     "mtime": 1783924611.8577442,
@@ -70,9 +60,9 @@
     "semantic_hash": "0ece90a148386d83fb52b512b51f1a0f"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\packages\\knowledge-extract\\src\\knowledge_extract\\extractors.py": {
-    "mtime": 1783924611.8823814,
-    "ast_hash": "7328375c6c6b99187591aae1a3dec4cc",
-    "semantic_hash": "7328375c6c6b99187591aae1a3dec4cc"
+    "mtime": 1784129057.5654833,
+    "ast_hash": "9a01cc5a118b4c221ec7efd758940f8d",
+    "semantic_hash": "9a01cc5a118b4c221ec7efd758940f8d"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\packages\\knowledge-extract\\src\\knowledge_extract\\mapping.py": {
     "mtime": 1783924611.884382,
@@ -90,9 +80,9 @@
     "semantic_hash": "43e5fc1ec195c3ac3afdad3c197e483d"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\packages\\knowledge-extract\\src\\knowledge_extract\\__init__.py": {
-    "mtime": 1783924611.8803406,
-    "ast_hash": "2cb9d25131465825af3bf2d199064b72",
-    "semantic_hash": "2cb9d25131465825af3bf2d199064b72"
+    "mtime": 1784106723.0268588,
+    "ast_hash": "9072ada39ef1945a27290064af8fec80",
+    "semantic_hash": "9072ada39ef1945a27290064af8fec80"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\packages\\profile-ingest\\src\\profile_ingest\\github.py": {
     "mtime": 1783924611.9013698,
@@ -125,14 +115,14 @@
     "semantic_hash": "854541de2e8d2330e917ca0ab2d6d2f3"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\scripts\\cache_whisper_model.py": {
-    "mtime": 1783924611.9402864,
-    "ast_hash": "8365ac43b16e5e102aed8d0a8526a4ab",
-    "semantic_hash": "8365ac43b16e5e102aed8d0a8526a4ab"
+    "mtime": 1783961159.7074876,
+    "ast_hash": "794c1ecec5ce2a0919f85bff13410914",
+    "semantic_hash": "794c1ecec5ce2a0919f85bff13410914"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\scripts\\docker-entrypoint.sh": {
-    "mtime": 1783924611.9422863,
-    "ast_hash": "13f524d73c630067d50c900c7024cdcb",
-    "semantic_hash": "13f524d73c630067d50c900c7024cdcb"
+    "mtime": 1784015467.8234463,
+    "ast_hash": "b0e1320a9f93013af941059897188195",
+    "semantic_hash": "b0e1320a9f93013af941059897188195"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\scripts\\smoke_doc_ingest.py": {
     "mtime": 1783924611.9442863,
@@ -200,9 +190,9 @@
     "semantic_hash": "947d61a72102f11e1b18901896bc7be7"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\tests\\e2e\\test_prompts_api.py": {
-    "mtime": 1783924611.9755669,
-    "ast_hash": "2a616b611e5132c43853a3738a41b7d1",
-    "semantic_hash": "2a616b611e5132c43853a3738a41b7d1"
+    "mtime": 1784107209.3411403,
+    "ast_hash": "2a2a3fd9063d6b51099544a793014f60",
+    "semantic_hash": "2a2a3fd9063d6b51099544a793014f60"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\tests\\e2e\\test_sources_flow.py": {
     "mtime": 1783924611.977523,
@@ -215,9 +205,9 @@
     "semantic_hash": "242efd04e9f2538381fabc409168152d"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\README.md": {
-    "mtime": 1783924611.8176413,
-    "ast_hash": "09f38959ecf9708d1906177d1353454f",
-    "semantic_hash": "09f38959ecf9708d1906177d1353454f"
+    "mtime": 1784127052.1652205,
+    "ast_hash": "c9a919b3f6c4283a971beecfac45fa83",
+    "semantic_hash": "c9a919b3f6c4283a971beecfac45fa83"
   },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.serena\\project.local.yml": {
     "mtime": 1783924963.8202636,
@@ -248,5 +238,390 @@
     "mtime": 1783924611.9302897,
     "ast_hash": "2a18fa1d5e81090656601867ad0b3275",
     "semantic_hash": "2a18fa1d5e81090656601867ad0b3275"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\components.json": {
+    "mtime": 1784038161.9194412,
+    "ast_hash": "6ec3dba9009eebcb3ad36228a8e3d52b",
+    "semantic_hash": "6ec3dba9009eebcb3ad36228a8e3d52b"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\package.json": {
+    "mtime": 1784038850.030465,
+    "ast_hash": "256df21f577844d9a726af98bdecebad",
+    "semantic_hash": "256df21f577844d9a726af98bdecebad"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\postcss.config.js": {
+    "mtime": 1784038148.77799,
+    "ast_hash": "e7e903292711dd5aeb5a8c50deb849a6",
+    "semantic_hash": "e7e903292711dd5aeb5a8c50deb849a6"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\tsconfig.app.json": {
+    "mtime": 1784037657.137753,
+    "ast_hash": "b739b632b8e92dcccb4ca35b9431d0dc",
+    "semantic_hash": "b739b632b8e92dcccb4ca35b9431d0dc"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\tsconfig.json": {
+    "mtime": 1784037652.4994197,
+    "ast_hash": "6ea63aef2395eb74cb590bca593e248c",
+    "semantic_hash": "6ea63aef2395eb74cb590bca593e248c"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\vite.config.ts": {
+    "mtime": 1784040118.2272131,
+    "ast_hash": "8b50e6142c8f43e33363266dbf2c847c",
+    "semantic_hash": "8b50e6142c8f43e33363266dbf2c847c"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\App.tsx": {
+    "mtime": 1784126919.2833288,
+    "ast_hash": "ac872d044b58d80ec0ab36ffbd27588a",
+    "semantic_hash": "ac872d044b58d80ec0ab36ffbd27588a"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\main.tsx": {
+    "mtime": 1784037935.293404,
+    "ast_hash": "6d9f36ba5f0c71d7d29e22117590bdb7",
+    "semantic_hash": "6d9f36ba5f0c71d7d29e22117590bdb7"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\vite-env.d.ts": {
+    "mtime": 1784037670.8863382,
+    "ast_hash": "0352474ba2918efe13895edbc3780d94",
+    "semantic_hash": "0352474ba2918efe13895edbc3780d94"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\AuthCard.tsx": {
+    "mtime": 1784040093.4154394,
+    "ast_hash": "78375ffab641a013cd3dcb279b70cb35",
+    "semantic_hash": "78375ffab641a013cd3dcb279b70cb35"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\BottomNav.tsx": {
+    "mtime": 1784095198.6088586,
+    "ast_hash": "00cce0a1d2e07f4f3ae2b2960f286c68",
+    "semantic_hash": "00cce0a1d2e07f4f3ae2b2960f286c68"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\Header.tsx": {
+    "mtime": 1784095191.2948537,
+    "ast_hash": "1a3c5597be480cb9d51a31072119800f",
+    "semantic_hash": "1a3c5597be480cb9d51a31072119800f"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\Icon.tsx": {
+    "mtime": 1784038665.055457,
+    "ast_hash": "877d358839f9ea84f5e4f66a8057f478",
+    "semantic_hash": "877d358839f9ea84f5e4f66a8057f478"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\InlineRecordButton.tsx": {
+    "mtime": 1784052012.3440015,
+    "ast_hash": "63a5604ab353ee936dd9fa34e6703f8b",
+    "semantic_hash": "63a5604ab353ee936dd9fa34e6703f8b"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\SourcePopover.tsx": {
+    "mtime": 1784052043.1792915,
+    "ast_hash": "83c770f3b67fd6bd7fb92f0a86f05042",
+    "semantic_hash": "83c770f3b67fd6bd7fb92f0a86f05042"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\UnifiedCaptureCard.tsx": {
+    "mtime": 1784126919.2833288,
+    "ast_hash": "5136d2c5246c47af172cc8d0a104d553",
+    "semantic_hash": "5136d2c5246c47af172cc8d0a104d553"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\Waveform.tsx": {
+    "mtime": 1784097505.660841,
+    "ast_hash": "9a42d42d89fe033386c785a26029cad3",
+    "semantic_hash": "9a42d42d89fe033386c785a26029cad3"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\badge.tsx": {
+    "mtime": 1784038206.925043,
+    "ast_hash": "8510911fff59be294d64dbfc67f5c710",
+    "semantic_hash": "8510911fff59be294d64dbfc67f5c710"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\button.tsx": {
+    "mtime": 1784038206.0335808,
+    "ast_hash": "5eb5c23dfc552fe75b9beeffacede350",
+    "semantic_hash": "5eb5c23dfc552fe75b9beeffacede350"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\card.tsx": {
+    "mtime": 1784038206.3047569,
+    "ast_hash": "5f465338c9c83716fd67bba76b9852d4",
+    "semantic_hash": "5f465338c9c83716fd67bba76b9852d4"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\input.tsx": {
+    "mtime": 1784038206.4980545,
+    "ast_hash": "186052fef4d6a678824a3ac70ec3bdec",
+    "semantic_hash": "186052fef4d6a678824a3ac70ec3bdec"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\popover.tsx": {
+    "mtime": 1784051953.8194897,
+    "ast_hash": "61634f232c0fee4cab67d97f8140b5d8",
+    "semantic_hash": "61634f232c0fee4cab67d97f8140b5d8"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\progress.tsx": {
+    "mtime": 1784038207.9727616,
+    "ast_hash": "ca99607c05ca0555bcb95eff552e64dc",
+    "semantic_hash": "ca99607c05ca0555bcb95eff552e64dc"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\scroll-area.tsx": {
+    "mtime": 1784038207.3121264,
+    "ast_hash": "8bf02de15eee0da6e5942ea2ff1c64c3",
+    "semantic_hash": "8bf02de15eee0da6e5942ea2ff1c64c3"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\separator.tsx": {
+    "mtime": 1784038208.440629,
+    "ast_hash": "31309c8fad1e9a91db2a4bdfb4988b45",
+    "semantic_hash": "31309c8fad1e9a91db2a4bdfb4988b45"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\skeleton.tsx": {
+    "mtime": 1784038207.54053,
+    "ast_hash": "64033a08d89d382ad050d80cbb0cc98d",
+    "semantic_hash": "64033a08d89d382ad050d80cbb0cc98d"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\sonner.tsx": {
+    "mtime": 1784040596.661713,
+    "ast_hash": "9689c822ea9f90b2a3ac694ecbf41b3d",
+    "semantic_hash": "9689c822ea9f90b2a3ac694ecbf41b3d"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\tabs.tsx": {
+    "mtime": 1784038207.0993583,
+    "ast_hash": "e882f6b90ef33bbb3c7637da50927d3a",
+    "semantic_hash": "e882f6b90ef33bbb3c7637da50927d3a"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\textarea.tsx": {
+    "mtime": 1784038206.7233887,
+    "ast_hash": "b068d08e701aefd6216234a763e3a2ef",
+    "semantic_hash": "b068d08e701aefd6216234a763e3a2ef"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\toggle-group.tsx": {
+    "mtime": 1784038209.0089793,
+    "ast_hash": "bc36423177245af73467d7842a49a29f",
+    "semantic_hash": "bc36423177245af73467d7842a49a29f"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\toggle.tsx": {
+    "mtime": 1784038208.7138896,
+    "ast_hash": "19e57219410292dd065cc51cfa97159d",
+    "semantic_hash": "19e57219410292dd065cc51cfa97159d"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\components\\ui\\tooltip.tsx": {
+    "mtime": 1784038208.190967,
+    "ast_hash": "870cad7a2a1504aa894032e4ff90d8e1",
+    "semantic_hash": "870cad7a2a1504aa894032e4ff90d8e1"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\hooks\\use-auth.ts": {
+    "mtime": 1784038977.916211,
+    "ast_hash": "c2654e170662a445748e409b4231f748",
+    "semantic_hash": "c2654e170662a445748e409b4231f748"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\hooks\\use-recorder.ts": {
+    "mtime": 1784126552.9206975,
+    "ast_hash": "a4e1767c30179eb1bbf99453b9773996",
+    "semantic_hash": "a4e1767c30179eb1bbf99453b9773996"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\lib\\api.ts": {
+    "mtime": 1784108138.0011783,
+    "ast_hash": "0d8991b1049f11ce5e8f74c0b0d5f617",
+    "semantic_hash": "0d8991b1049f11ce5e8f74c0b0d5f617"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\lib\\utils.ts": {
+    "mtime": 1784038156.4442866,
+    "ast_hash": "618d00bf4537ce84f9ba62c5b215fb30",
+    "semantic_hash": "618d00bf4537ce84f9ba62c5b215fb30"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\views\\CaptureView.tsx": {
+    "mtime": 1784126919.2833288,
+    "ast_hash": "abe085d847d95d09cad0735f28ff6154",
+    "semantic_hash": "abe085d847d95d09cad0735f28ff6154"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\src\\views\\KnowledgeView.tsx": {
+    "mtime": 1784040343.7282145,
+    "ast_hash": "f08eedd4059ced64da975d7f028c78c8",
+    "semantic_hash": "f08eedd4059ced64da975d7f028c78c8"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\packages\\knowledge-extract\\src\\knowledge_extract\\probe.py": {
+    "mtime": 1784106239.7296743,
+    "ast_hash": "afdf0bc6982da55fccf4c1a8c8561730",
+    "semantic_hash": "afdf0bc6982da55fccf4c1a8c8561730"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\packages\\knowledge-extract\\src\\knowledge_extract\\probe_store.py": {
+    "mtime": 1784106711.9067132,
+    "ast_hash": "b37feaa7f3eb48136e3c1f0feff23165",
+    "semantic_hash": "b37feaa7f3eb48136e3c1f0feff23165"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\scripts\\build-web.sh": {
+    "mtime": 1784040131.296302,
+    "ast_hash": "cb8c929dec90f7c1ceab471068d85e08",
+    "semantic_hash": "cb8c929dec90f7c1ceab471068d85e08"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\tests\\test_probe.py": {
+    "mtime": 1784109850.1030734,
+    "ast_hash": "60313ca7b327cd930423d8dec7d9510f",
+    "semantic_hash": "60313ca7b327cd930423d8dec7d9510f"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\Claude.md": {
+    "mtime": 1783943941.4426346,
+    "ast_hash": "90d5975c1d28ef7987e680c072c25b1e",
+    "semantic_hash": "90d5975c1d28ef7987e680c072c25b1e"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\PRODUCT.md": {
+    "mtime": 1784016182.9695978,
+    "ast_hash": "c544b7b53e67e9d4fe13f17d3ee88a7f",
+    "semantic_hash": "c544b7b53e67e9d4fe13f17d3ee88a7f"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\progress.md": {
+    "mtime": 1784108016.0843744,
+    "ast_hash": "16ad2f0eb54a7946ee0344a6b4d2f96b",
+    "semantic_hash": "16ad2f0eb54a7946ee0344a6b4d2f96b"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-1-brief.md": {
+    "mtime": 1784106178.2258966,
+    "ast_hash": "bc625dbee7374e8782139f02b33a8811",
+    "semantic_hash": "bc625dbee7374e8782139f02b33a8811"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-1-fix-report.md": {
+    "mtime": 1784106400.9055545,
+    "ast_hash": "01231293ab3058d4ba2883b27c0fadb0",
+    "semantic_hash": "01231293ab3058d4ba2883b27c0fadb0"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-1-report.md": {
+    "mtime": 1784106278.3291495,
+    "ast_hash": "02978f33d8239eb88d5ff7da7e62abf0",
+    "semantic_hash": "02978f33d8239eb88d5ff7da7e62abf0"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-10-brief.md": {
+    "mtime": 1784040058.7828841,
+    "ast_hash": "af785d6f5fc12b09300fe67ae20634bd",
+    "semantic_hash": "af785d6f5fc12b09300fe67ae20634bd"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-10-report.md": {
+    "mtime": 1784040231.82091,
+    "ast_hash": "0eb669dfc75b0c27d542ede9e0d84992",
+    "semantic_hash": "0eb669dfc75b0c27d542ede9e0d84992"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-11-brief.md": {
+    "mtime": 1784040303.4124053,
+    "ast_hash": "02a59f7176897d8e8d2d9c705a0bda39",
+    "semantic_hash": "02a59f7176897d8e8d2d9c705a0bda39"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-11-report.md": {
+    "mtime": 1784040390.1280687,
+    "ast_hash": "d491eea111af91c3e62d334120699dbb",
+    "semantic_hash": "d491eea111af91c3e62d334120699dbb"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-2-brief.md": {
+    "mtime": 1784106647.818046,
+    "ast_hash": "ad974a27cd4400b4f3427c36e6197040",
+    "semantic_hash": "ad974a27cd4400b4f3427c36e6197040"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-2-report.md": {
+    "mtime": 1784106759.1954584,
+    "ast_hash": "0bd297217ff9ac1ac2ca430f71579ae8",
+    "semantic_hash": "0bd297217ff9ac1ac2ca430f71579ae8"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-3-brief.md": {
+    "mtime": 1784106856.7628517,
+    "ast_hash": "c57a397911413865ec96ee829b1cc127",
+    "semantic_hash": "c57a397911413865ec96ee829b1cc127"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-3-report.md": {
+    "mtime": 1784107316.486275,
+    "ast_hash": "da1303232b2b7a850d373ebe9472b092",
+    "semantic_hash": "da1303232b2b7a850d373ebe9472b092"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-4-brief.md": {
+    "mtime": 1784107585.401246,
+    "ast_hash": "7585070313ee48227afe90d3fe26fc89",
+    "semantic_hash": "7585070313ee48227afe90d3fe26fc89"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-4-report.md": {
+    "mtime": 1784038721.05872,
+    "ast_hash": "ecd7715171a3267ae91db9c2e10e499e",
+    "semantic_hash": "ecd7715171a3267ae91db9c2e10e499e"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-5-brief.md": {
+    "mtime": 1784107796.9102168,
+    "ast_hash": "5c7317493ecd4c28bc57d3589872436a",
+    "semantic_hash": "5c7317493ecd4c28bc57d3589872436a"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-5-report.md": {
+    "mtime": 1784107896.0336418,
+    "ast_hash": "fdb3df1cfefd931386be4136cc2f25e2",
+    "semantic_hash": "fdb3df1cfefd931386be4136cc2f25e2"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-6-brief.md": {
+    "mtime": 1784039026.9450426,
+    "ast_hash": "9a146908ed431959291d16d531f57646",
+    "semantic_hash": "9a146908ed431959291d16d531f57646"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-6-report.md": {
+    "mtime": 1784039147.0575788,
+    "ast_hash": "89be7ca67ca47ef744761b394d51fce7",
+    "semantic_hash": "89be7ca67ca47ef744761b394d51fce7"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-7-brief.md": {
+    "mtime": 1784039224.5800462,
+    "ast_hash": "02a864c197869e180250debe9c2120f2",
+    "semantic_hash": "02a864c197869e180250debe9c2120f2"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-7-report.md": {
+    "mtime": 1784039368.2566335,
+    "ast_hash": "3373637890c3e0f6b5aea9c18073fca6",
+    "semantic_hash": "3373637890c3e0f6b5aea9c18073fca6"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-8-brief.md": {
+    "mtime": 1784039580.002323,
+    "ast_hash": "3d31acb2a3ca5f8b807903a316b4e3ef",
+    "semantic_hash": "3d31acb2a3ca5f8b807903a316b4e3ef"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-8-report.md": {
+    "mtime": 1784039688.434958,
+    "ast_hash": "0e2d7ea00044af85c140c660ae3c9b92",
+    "semantic_hash": "0e2d7ea00044af85c140c660ae3c9b92"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-9-brief.md": {
+    "mtime": 1784039757.420622,
+    "ast_hash": "cef271718077bd2dc8e04b77ca1f7952",
+    "semantic_hash": "cef271718077bd2dc8e04b77ca1f7952"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\.superpowers\\sdd\\task-9-report.md": {
+    "mtime": 1784040039.9935863,
+    "ast_hash": "31470d627df2cbb39510ea78e35eb8dc",
+    "semantic_hash": "31470d627df2cbb39510ea78e35eb8dc"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\apps\\web\\index.html": {
+    "mtime": 1784037928.5181296,
+    "ast_hash": "3e9cd38553e16d48a13d2fb5e3f78eb1",
+    "semantic_hash": "3e9cd38553e16d48a13d2fb5e3f78eb1"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\frontend-migration-plan.md": {
+    "mtime": 1784034706.9248886,
+    "ast_hash": "d83e80d4601c1ce53c131f82debb6d31",
+    "semantic_hash": "d83e80d4601c1ce53c131f82debb6d31"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-14-frontend-react-migration.md": {
+    "mtime": 1784035932.3990371,
+    "ast_hash": "7025856c6355a743e9810fc31ff2a200",
+    "semantic_hash": "7025856c6355a743e9810fc31ff2a200"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-14-unified-capture-card.md": {
+    "mtime": 1784051796.7418084,
+    "ast_hash": "4d8c1b5671a73f535e84ab0549ac14e5",
+    "semantic_hash": "4d8c1b5671a73f535e84ab0549ac14e5"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-15-frontend-wiring-migration.md": {
+    "mtime": 1784096890.1419854,
+    "ast_hash": "55288f5c1ff45473bed829d7f4e8b23b",
+    "semantic_hash": "55288f5c1ff45473bed829d7f4e8b23b"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-15-probe-feature.md": {
+    "mtime": 1784104777.776008,
+    "ast_hash": "f882e6e0ec52caaf0fde6294f8c18ac5",
+    "semantic_hash": "f882e6e0ec52caaf0fde6294f8c18ac5"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\specs\\2026-07-15-frontend-migration-wiring.md": {
+    "mtime": 1784096812.2910051,
+    "ast_hash": "a28c7e99c2fa182fb180dac5de4c807b",
+    "semantic_hash": "a28c7e99c2fa182fb180dac5de4c807b"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\specs\\2026-07-15-probe-feature-design.md": {
+    "mtime": 1784104517.4163797,
+    "ast_hash": "21ec64cc0d5b5e9adb18526304351f03",
+    "semantic_hash": "21ec64cc0d5b5e9adb18526304351f03"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\prompts\\probe_generation.md": {
+    "mtime": 1784106683.3487995,
+    "ast_hash": "846b484ac21b2ca44ad4c2416b69d688",
+    "semantic_hash": "846b484ac21b2ca44ad4c2416b69d688"
   }
 }
