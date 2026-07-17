@@ -3,15 +3,12 @@ import OpenAI from "openai";
 import { config } from "../config.js";
 
 const anthropicClient = new Anthropic({ apiKey: config.anthropicKey });
+const openaiClient = new OpenAI({ baseURL: config.aiBaseUrl, apiKey: config.openaiKey });
 
 type Msg = { role: "user" | "assistant"; content: string };
 
 export async function chat(system: string, messages: Msg[]): Promise<string> {
   if (config.aiProvider === "openai") {
-    const openaiClient = new OpenAI({
-      baseURL: config.aiBaseUrl,
-      apiKey: config.openaiKey,
-    });
     const response = await openaiClient.chat.completions.create({
       model: config.aiModel,
       max_tokens: 1024,
@@ -36,10 +33,6 @@ export async function chat(system: string, messages: Msg[]): Promise<string> {
 
 export async function chatJSON<T>(system: string, messages: Msg[]): Promise<T> {
   if (config.aiProvider === "openai") {
-    const openaiClient = new OpenAI({
-      baseURL: config.aiBaseUrl,
-      apiKey: config.openaiKey,
-    });
     const response = await openaiClient.chat.completions.create({
       model: config.aiModel,
       max_tokens: 2048,
