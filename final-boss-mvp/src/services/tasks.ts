@@ -91,9 +91,11 @@ export async function getTodayTask(userId: string) {
 
 export async function markMissed(userId: string) {
   const yesterday = toDateString(new Date(Date.now() - 24 * 60 * 60 * 1000));
-  await db.update(dailyTasks).set({ status: "missed" })
-    .where(and(eq(dailyTasks.userId, userId), eq(dailyTasks.assignedDate, yesterday), eq(dailyTasks.status, "assigned")));
+  const missed = await db.update(dailyTasks).set({ status: "missed" })
+    .where(and(eq(dailyTasks.userId, userId), eq(dailyTasks.assignedDate, yesterday), eq(dailyTasks.status, "assigned")))
+    .returning();
 
-  // Break streak
-  await db.update(users).set({ currentStreak: 0 }).where(eq(users.id, userId));
+  if (missed.length > 0) {
+    await db.update(users).set({ currentStreak: 0 }).where(eq(users.id, userId));
+  }
 }

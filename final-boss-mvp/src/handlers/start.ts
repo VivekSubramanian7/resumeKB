@@ -10,6 +10,36 @@ export async function handleStart(ctx: Context) {
 
   const user = await getOrCreateUser(telegramId, username);
 
+  if (user.trialStatus === "failed") {
+    const trialEnd = user.trialStartDate
+      ? new Date(new Date(user.trialStartDate).getTime() + 7 * 24 * 60 * 60 * 1000)
+      : null;
+    const daysSinceEnd = trialEnd
+      ? Math.floor((Date.now() - trialEnd.getTime()) / (24 * 60 * 60 * 1000))
+      : 999;
+
+    if (daysSinceEnd < 14) {
+      const daysLeft = 14 - daysSinceEnd;
+      await ctx.reply(`Your trial period ended. You can re-enter in ${daysLeft} day${daysLeft === 1 ? "" : "s"}.\n\nUse this time to reflect on what held you back.`);
+      return;
+    }
+
+    // 14+ days passed — reset for re-entry
+    await db.update(users).set({
+      trialStatus: "pending",
+      onboardingStatus: "awaiting_final_boss",
+      trialStartDate: null,
+      currentStreak: 0,
+      clarifyingAnswers: [],
+      finalBossDescription: null,
+      currentSelfDescription: null,
+      archetype: null,
+      archetypeExplanation: null,
+      timeToFinalBoss: null,
+    }).where(eq(users.id, user.id));
+    // fall through to normal start flow below
+  }
+
   if (user.onboardingStatus === "complete") {
     await ctx.reply("Welcome back. Your journey continues. ⚡");
     return;

@@ -47,14 +47,6 @@ export async function handleClarifyingAnswer(userId: string, answer: string): Pr
     messages.push({ role: "user", content: qa.answer });
   }
 
-  // Get what AI said last (the question we're answering)
-  // We need the last AI message — reconstruct by getting AI response to previous context
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const lastAiResponse = messages.length > 1
-    ? await ai.chat(ASSESSOR_SYSTEM, messages.slice(0, -0)) // hack: we'll store the question
-    : "";
-
-  // Actually, simpler: just add the new answer and ask for next question
   messages.push({ role: "user", content: answer });
   const nextResponse = await ai.chat(ASSESSOR_SYSTEM, messages);
 
