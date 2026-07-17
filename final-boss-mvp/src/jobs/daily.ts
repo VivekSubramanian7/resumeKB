@@ -62,19 +62,23 @@ export function startJobs(bot: Bot) {
     const activeTrials = await db.select().from(users).where(eq(users.trialStatus, "active"));
 
     for (const user of activeTrials) {
-      const result = await evaluateTrial(user.id);
+      try {
+        const result = await evaluateTrial(user.id);
 
-      if (result === "passed") {
-        await bot.api.sendMessage(
-          user.telegramId,
-          "🏆 *You passed the trial.*\n\nYou showed up. You proved you're serious.\n\nWelcome to the program. Your journey continues — no more trial pressure, just consistent growth.\n\nTomorrow's task arrives in the morning.",
-          { parse_mode: "Markdown" }
-        );
-      } else if (result === "failed") {
-        await bot.api.sendMessage(
-          user.telegramId,
-          "Your trial period has ended.\n\nYou needed 5 completed days out of 7. You didn't hit the threshold.\n\nThis isn't a punishment — it's a filter. This program works for people who show up consistently.\n\nYou can try again in 14 days. Use /start to re-enter when you're ready.",
-        );
+        if (result === "passed") {
+          await bot.api.sendMessage(
+            user.telegramId,
+            "🏆 *You passed the trial.*\n\nYou showed up. You proved you're serious.\n\nWelcome to the program. Your journey continues — no more trial pressure, just consistent growth.\n\nTomorrow's task arrives in the morning.",
+            { parse_mode: "Markdown" }
+          );
+        } else if (result === "failed") {
+          await bot.api.sendMessage(
+            user.telegramId,
+            "Your trial period has ended.\n\nYou needed 5 completed days out of 7. You didn't hit the threshold.\n\nThis isn't a punishment — it's a filter. This program works for people who show up consistently.\n\nYou can try again in 14 days. Use /start to re-enter when you're ready.",
+          );
+        }
+      } catch (err) {
+        console.error(`[CRON] Trial eval failed for user ${user.telegramId}:`, err);
       }
     }
   });

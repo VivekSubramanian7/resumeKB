@@ -1,4 +1,4 @@
-import { eq, and, gte } from "drizzle-orm";
+import { eq, and, gte, lte } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { users, dailyTasks } from "../db/schema.js";
 
@@ -9,17 +9,20 @@ export async function evaluateTrial(userId: string): Promise<"active" | "passed"
   const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user || user.trialStatus !== "active" || !user.trialStartDate) return "active";
 
-  const startDate = new Date(user.trialStartDate);
+  const startDateString = user.trialStartDate;
+  const startDate = new Date(startDateString);
   const endDate = new Date(startDate.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
 
   if (new Date() < endDate) return "active"; // not over yet
 
   // Count unique days with completed tasks
+  const endDateString = endDate.toISOString().split("T")[0] as string;
   const tasks = await db.select().from(dailyTasks).where(
     and(
       eq(dailyTasks.userId, userId),
       eq(dailyTasks.status, "completed"),
-      gte(dailyTasks.assignedDate, user.trialStartDate),
+      gte(dailyTasks.assignedDate, startDateString),
+      lte(dailyTasks.assignedDate, endDateString),
     )
   );
 
