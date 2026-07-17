@@ -29,8 +29,9 @@ export async function handleDailyMessage(ctx: Context) {
   }
 
   if (text === "skip") {
-    await completeTask(task.id);
-    await ctx.reply(`✅ Day logged. Streak: ${user.currentStreak + 1} 🔥`);
+    const result = await completeTask(task.id);
+    const newStreak = result?.newStreak ?? 1;
+    await ctx.reply(`✅ Day logged. Streak: ${newStreak} 🔥`);
     return true;
   }
 
@@ -39,8 +40,9 @@ export async function handleDailyMessage(ctx: Context) {
     // Check if this looks like a reflection (they said "done" previously, now giving reflection)
     // Simple heuristic: if it's not a question or command, treat as reflection
     if (text.length > 5 && !text.startsWith("/")) {
-      await completeTask(task.id, ctx.message.text);
-      await ctx.reply(`✅ Logged with reflection. Streak: ${user.currentStreak + 1} 🔥\n\nSee you tonight for the check-in.`);
+      const result = await completeTask(task.id, ctx.message.text);
+      const newStreak = result?.newStreak ?? 1;
+      await ctx.reply(`✅ Logged with reflection. Streak: ${newStreak} 🔥\n\nSee you tonight for the check-in.`);
       return true;
     }
   }

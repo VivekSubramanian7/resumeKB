@@ -63,21 +63,22 @@ export async function generateDailyTask(userId: string) {
   return task;
 }
 
-export async function completeTask(taskId: string, reflection?: string) {
+export async function completeTask(taskId: string, reflection?: string): Promise<{ task: typeof dailyTasks.$inferSelect; newStreak: number } | undefined> {
   const [task] = await db.update(dailyTasks).set({
     status: "completed",
     reflection: reflection ?? null,
   }).where(eq(dailyTasks.id, taskId)).returning();
 
+  if (!task) return undefined;
+
   // Update streak
-  if (task) {
-    const [user] = await db.select().from(users).where(eq(users.id, task.userId)).limit(1);
-    if (user) {
-      await db.update(users).set({ currentStreak: user.currentStreak + 1 }).where(eq(users.id, user.id));
-    }
+  const [user] = await db.select().from(users).where(eq(users.id, task.userId)).limit(1);
+  const newStreak = user ? user.currentStreak + 1 : 1;
+  if (user) {
+    await db.update(users).set({ currentStreak: newStreak }).where(eq(users.id, user.id));
   }
 
-  return task;
+  return { task, newStreak };
 }
 
 export async function getTodayTask(userId: string) {
