@@ -14,7 +14,12 @@ async function main() {
   const bot = createBot();
   startJobs(bot);
 
-  bot.start({
+  process.once("SIGTERM", () => {
+    bot.stop();
+    server.close();
+  });
+
+  await bot.start({
     onStart: () => console.log("Bot running."),
   });
 }
