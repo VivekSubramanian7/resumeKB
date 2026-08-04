@@ -1,14 +1,20 @@
 import Fastify from "fastify";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
+import { db } from "./db/client.js";
 import { config } from "./config.js";
 import { createBot } from "./bot.js";
 import { startJobs } from "./jobs/daily.js";
 
 async function main() {
-  // Health check server (Railway needs this)
+  // Health check server must start before migrations so Railway doesn't kill us
   const server = Fastify({ logger: false });
   server.get("/health", async () => ({ status: "ok" }));
   await server.listen({ port: config.port, host: "0.0.0.0" });
   console.log(`Health check on port ${config.port}`);
+
+  console.log("Running migrations...");
+  await migrate(db, { migrationsFolder: "./drizzle/migrations" });
+  console.log("Migrations done.");
 
   const bot = createBot();
   bot.catch((err) => console.error("Bot error:", err));
