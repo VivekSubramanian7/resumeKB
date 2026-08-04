@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { users, skillNodes } from "../db/schema.js";
 import * as ai from "./ai.js";
+import { getUserAIConfigByUserId } from "./llmSettings.js";
 import { ASSESSOR_SYSTEM, ARCHETYPE_SYSTEM } from "../prompts/assessor.js";
 import { TREE_SYSTEM } from "../prompts/architect.js";
 
@@ -23,10 +24,10 @@ export async function handleFinalBossInput(userId: string, description: string):
     onboardingStatus: "clarifying",
   }).where(eq(users.id, userId));
 
-  // Get first clarifying question
+  const userConfig = await getUserAIConfigByUserId(userId);
   const response = await ai.chat(ASSESSOR_SYSTEM, [
     { role: "user", content: `Here's who I want to become:\n\n${description}` },
-  ]);
+  ], userConfig);
 
   return response;
 }
@@ -48,7 +49,8 @@ export async function handleClarifyingAnswer(userId: string, answer: string): Pr
   }
 
   messages.push({ role: "user", content: answer });
-  const nextResponse = await ai.chat(ASSESSOR_SYSTEM, messages);
+  const userConfig = await getUserAIConfigByUserId(userId);
+  const nextResponse = await ai.chat(ASSESSOR_SYSTEM, messages, userConfig);
 
   const isReady = nextResponse.startsWith("[READY]");
 
@@ -76,11 +78,12 @@ export async function handleCurrentSelf(userId: string, description: string): Pr
 
   const assignmentInput = `Final boss vision: ${user!.finalBossDescription}\n\nCurrent self: ${description}\n\nClarifying answers:\n${(user!.clarifyingAnswers || []).map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`).join("\n")}`;
 
+  const userConfig = await getUserAIConfigByUserId(userId);
   const result = await ai.chatJSON<{
     archetype: string;
     explanation: string;
     dimensions: { name: string; currentLevel: number; targetLevel: number }[];
-  }>(ARCHETYPE_SYSTEM, [{ role: "user", content: assignmentInput }]);
+  }>(ARCHETYPE_SYSTEM, [{ role: "user", content: assignmentInput }], userConfig);
 
   await db.update(users).set({
     archetype: result.archetype,
@@ -97,9 +100,10 @@ export async function generateTree(userId: string): Promise<typeof skillNodes.$i
 
   const treeInput = `Archetype: ${user.archetype}\nGoal: ${user.finalBossDescription}\nCurrent: ${user.currentSelfDescription}\nDimensions identified during assessment.`;
 
+  const userConfig = await getUserAIConfigByUserId(userId);
   const result = await ai.chatJSON<{
     nodes: { title: string; description: string; estimatedDays: number; parentTitle: string | null; orderIndex: number }[];
-  }>(TREE_SYSTEM, [{ role: "user", content: treeInput }]);
+  }>(TREE_SYSTEM, [{ role: "user", content: treeInput }], userConfig);
 
   // Insert root nodes first
   const nodeMap = new Map<string, string>();

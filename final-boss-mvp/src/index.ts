@@ -10,8 +10,8 @@ async function main() {
   await server.listen({ port: config.port, host: "0.0.0.0" });
   console.log(`Health check on port ${config.port}`);
 
-  // Start bot
   const bot = createBot();
+  bot.catch((err) => console.error("Bot error:", err));
   startJobs(bot);
 
   process.once("SIGTERM", () => {
@@ -19,8 +19,20 @@ async function main() {
     server.close();
   });
 
-  await bot.start({
+  console.log("Starting bot...");
+  bot.start({
     onStart: () => console.log("Bot running."),
+  }).catch((err) => {
+    console.error("bot.start() rejected:", err);
+    process.exit(1);
+  });
+
+  // Give bot.start() 10s to connect
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error("bot.start() timed out after 10s")), 10_000);
+    bot.api.getMe()
+      .then((me) => { clearTimeout(timeout); console.log(`Polling as @${me.username}`); resolve(); })
+      .catch((err) => { clearTimeout(timeout); reject(err); });
   });
 }
 

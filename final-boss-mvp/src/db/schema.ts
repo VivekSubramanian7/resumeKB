@@ -56,6 +56,17 @@ export const dailyTasks = pgTable("daily_tasks", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const userLlmSettings = pgTable("user_llm_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  aiProvider: text("ai_provider").notNull().default("anthropic"), // anthropic | openai
+  aiBaseUrl: text("ai_base_url"),
+  aiApiKey: text("ai_api_key").notNull(),
+  aiModel: text("ai_model").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const checkIns = pgTable("check_ins", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),

@@ -5,12 +5,16 @@ import { handleOnboardingMessage } from "./handlers/onboarding.js";
 import { handleDailyMessage } from "./handlers/daily.js";
 import { handleCallback } from "./handlers/callbacks.js";
 import { getOrCreateUser } from "./services/onboarding.js";
+import { handleSettingsCommand, handleSettingsReset, handleSettingsClear, handleSettingsMessage } from "./handlers/settings.js";
 
 export function createBot() {
   const bot = new Bot(config.telegramToken);
 
   // Commands
   bot.command("start", handleStart);
+  bot.command("settings", handleSettingsCommand);
+  bot.command("settings_reset", handleSettingsReset);
+  bot.command("settings_clear", handleSettingsClear);
 
   bot.command("status", async (ctx) => {
     if (!ctx.from) return;
@@ -41,6 +45,9 @@ export function createBot() {
   // Messages — route based on user state
   bot.on("message:text", async (ctx) => {
     if (!ctx.from) return;
+
+    // Settings flow takes priority while user is in settings wizard
+    if (await handleSettingsMessage(ctx)) return;
 
     const user = await getOrCreateUser(ctx.from.id);
 

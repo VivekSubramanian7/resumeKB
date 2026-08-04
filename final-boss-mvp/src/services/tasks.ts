@@ -2,6 +2,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { dailyTasks, skillNodes, users } from "../db/schema.js";
 import * as ai from "./ai.js";
+import { getUserAIConfigByUserId } from "./llmSettings.js";
 import { taskGenerationSystem } from "../prompts/coach.js";
 
 function toDateString(d: Date): string {
@@ -46,9 +47,11 @@ export async function generateDailyTask(userId: string) {
     recentTasks: recentTasks.map((t) => `[${t.status}] ${t.taskText}`),
   });
 
+  const userConfig = await getUserAIConfigByUserId(userId);
   const result = await ai.chatJSON<{ taskText: string; taskType: string }>(
     system,
-    [{ role: "user", content: "Generate today's task." }]
+    [{ role: "user", content: "Generate today's task." }],
+    userConfig
   );
 
   const [task] = await db.insert(dailyTasks).values({
