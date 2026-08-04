@@ -21,7 +21,7 @@ export async function generateDailyTask(userId: string) {
   const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user) throw new Error("User not found");
 
-  // Get active node (deepest active — prefer child over parent)
+  // Get active node (deepest active -- prefer child over parent)
   const activeNodes = await db.select().from(skillNodes)
     .where(and(eq(skillNodes.userId, userId), eq(skillNodes.status, "active")));
 

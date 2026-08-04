@@ -24,7 +24,7 @@ export async function handleStart(ctx: Context) {
       return;
     }
 
-    // 14+ days passed — reset for re-entry
+    // 14+ days passed -- reset for re-entry
     await db.update(users).set({
       trialStatus: "pending",
       onboardingStatus: "awaiting_final_boss",
@@ -55,8 +55,9 @@ export async function handleStart(ctx: Context) {
 
   await ctx.reply(
     "Welcome to *Final Boss*\\.\n\n" +
-    "This is a personal transformation program\\. Not an app you open when you feel like it — a commitment\\.\n\n" +
+    "This is a personal transformation program\\. Not an app you open when you feel like it, a commitment\\.\n\n" +
     "You have 7 days to prove you're serious\\. Complete 5 of 7 daily tasks, or you're out\\.\n\n" +
+    "💡 _Tip: Use /settings to bring your own LLM API key \\(Anthropic, OpenAI, or local\\)\\._\n\n" +
     "Ready? Let's begin\\.\n\n" +
     "*Who is the final boss version of you?*\n\n" +
     "Describe who you want to become\\. Be specific, be ambitious\\. The person you'd be if you had no excuses\\.",

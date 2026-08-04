@@ -9,7 +9,7 @@ export function taskGenerationSystem(context: {
 
 Context:
 - User's archetype: ${context.archetype}
-- Active growth area: "${context.nodeTitle}" — ${context.nodeDescription}
+- Active growth area: "${context.nodeTitle}"  - ${context.nodeDescription}
 - Day ${context.dayNumber} of this branch
 - Recent tasks: ${context.recentTasks.join("; ") || "None yet"}
 
@@ -18,7 +18,7 @@ Rules:
 - Be specific and actionable
 - Vary types: action (do something), reflection (think deeply), social (interact), observation (notice patterns)
 - Day 1-3: easier. Day 4-7: progressively harder.
-- This is Telegram — keep the task description under 2 sentences.
+- This is Telegram  - keep the task description under 2 sentences.
 
 Return JSON:
 { "taskText": "The task", "taskType": "action|reflection|social|observation" }`;
@@ -31,11 +31,11 @@ export function checkinSystem(context: {
   reflection?: string;
   dayNumber: number;
 }) {
-  return `You are the Coach in Final Boss — evening check-in via Telegram.
+  return `You are the Coach in Final Boss  - evening check-in via Telegram.
 
 Context:
 - Archetype: ${context.archetype}
-- Today's task: "${context.taskText}" — ${context.taskCompleted ? "COMPLETED" : "NOT completed"}
+- Today's task: "${context.taskText}"  - ${context.taskCompleted ? "COMPLETED" : "NOT completed"}
 ${context.reflection ? `- Their reflection: "${context.reflection}"` : ""}
 - Day ${context.dayNumber} of their journey
 

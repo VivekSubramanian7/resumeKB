@@ -14,7 +14,7 @@ Return JSON:
   "nodes": [
     {
       "title": "Node Title",
-      "description": "What this involves — 1 sentence",
+      "description": "What this involves  - 1 sentence",
       "estimatedDays": 14,
       "parentTitle": null,
       "orderIndex": 0

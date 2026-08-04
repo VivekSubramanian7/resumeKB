@@ -19,7 +19,7 @@ export async function handleOnboardingMessage(ctx: Context) {
 
   switch (user.onboardingStatus) {
     case "not_started":
-      // They sent a message without /start — nudge them
+      // They sent a message without /start -- nudge them
       await ctx.reply("Send /start to begin your journey.");
       break;
 
@@ -35,7 +35,7 @@ export async function handleOnboardingMessage(ctx: Context) {
 
       if (isReady) {
         await ctx.reply(response);
-        await ctx.reply("Now — *who are you today?*\n\nBe honest. Where do you actually stand right now? What's your reality?", { parse_mode: "MarkdownV2" });
+        await ctx.reply("Now, *who are you today?*\n\nBe honest. Where do you actually stand right now? What's your reality?", { parse_mode: "MarkdownV2" });
       } else {
         await ctx.reply(response);
       }
@@ -83,6 +83,6 @@ export async function handleOnboardingMessage(ctx: Context) {
       break;
 
     default:
-      await ctx.reply("Hold on — something's processing. Give me a moment.");
+      await ctx.reply("Hold on, something's processing. Give me a moment.");
   }
 }

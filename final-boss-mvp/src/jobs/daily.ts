@@ -7,7 +7,7 @@ import { evaluateTrial, getTrialDayNumber } from "../services/trial.js";
 import type { Bot } from "grammy";
 
 export function startJobs(bot: Bot) {
-  // Morning: 7:00 UTC — generate and send daily task
+  // Morning: 7:00 UTC  - generate and send daily task
   cron.schedule("0 7 * * *", async () => {
     console.log("[CRON] Morning task delivery");
 
@@ -27,7 +27,7 @@ export function startJobs(bot: Bot) {
 
         await bot.api.sendMessage(
           user.telegramId,
-          `☀️ *Day ${dayNum} — Your task:*\n\n${task.taskText}\n\n_Type: ${task.taskType}_${trialNote}\n\nReply "done" when complete.`,
+          `☀️ *Day ${dayNum}  - Your task:*\n\n${task.taskText}\n\n_Type: ${task.taskType}_${trialNote}\n\nReply "done" when complete.`,
           { parse_mode: "Markdown" }
         );
       } catch (err) {
@@ -36,7 +36,7 @@ export function startJobs(bot: Bot) {
     }
   });
 
-  // Evening: 20:00 UTC — check-in prompt
+  // Evening: 20:00 UTC  - check-in prompt
   cron.schedule("0 20 * * *", async () => {
     console.log("[CRON] Evening check-in prompt");
 
@@ -47,7 +47,7 @@ export function startJobs(bot: Bot) {
       try {
         await bot.api.sendMessage(
           user.telegramId,
-          "🌙 Evening check-in time.\n\nHow did today go? Tell me about your task — did you do it? What did you notice?",
+          "🌙 Evening check-in time.\n\nHow did today go? Tell me about your task  - did you do it? What did you notice?",
         );
       } catch (err) {
         console.error(`[CRON] Check-in failed for ${user.telegramId}:`, err);
@@ -68,13 +68,13 @@ export function startJobs(bot: Bot) {
         if (result === "passed") {
           await bot.api.sendMessage(
             user.telegramId,
-            "🏆 *You passed the trial.*\n\nYou showed up. You proved you're serious.\n\nWelcome to the program. Your journey continues — no more trial pressure, just consistent growth.\n\nTomorrow's task arrives in the morning.",
+            "🏆 *You passed the trial.*\n\nYou showed up. You proved you're serious.\n\nWelcome to the program. Your journey continues  - no more trial pressure, just consistent growth.\n\nTomorrow's task arrives in the morning.",
             { parse_mode: "Markdown" }
           );
         } else if (result === "failed") {
           await bot.api.sendMessage(
             user.telegramId,
-            "Your trial period has ended.\n\nYou needed 5 completed days out of 7. You didn't hit the threshold.\n\nThis isn't a punishment — it's a filter. This program works for people who show up consistently.\n\nYou can try again in 14 days. Use /start to re-enter when you're ready.",
+            "Your trial period has ended.\n\nYou needed 5 completed days out of 7. You didn't hit the threshold.\n\nThis isn't a punishment  - it's a filter. This program works for people who show up consistently.\n\nYou can try again in 14 days. Use /start to re-enter when you're ready.",
           );
         }
       } catch (err) {

@@ -21,7 +21,7 @@ export function createBot() {
     const user = await getOrCreateUser(ctx.from.id);
 
     if (user.onboardingStatus !== "complete") {
-      await ctx.reply(`Onboarding status: ${user.onboardingStatus}\n\nKeep going — send me a message to continue.`);
+      await ctx.reply(`Onboarding status: ${user.onboardingStatus}\n\nKeep going - send me a message to continue.`);
       return;
     }
 
@@ -42,7 +42,7 @@ export function createBot() {
   // Callbacks (inline keyboard buttons)
   bot.on("callback_query:data", handleCallback);
 
-  // Messages — route based on user state
+  // Messages -- route based on user state
   bot.on("message:text", async (ctx) => {
     if (!ctx.from) return;
 

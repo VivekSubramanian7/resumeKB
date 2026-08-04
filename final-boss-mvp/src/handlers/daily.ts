@@ -18,7 +18,7 @@ export async function handleDailyMessage(ctx: Context) {
   }
 
   if (task.status === "completed") {
-    await ctx.reply("You already completed today's task. Rest up — tomorrow brings a new challenge.");
+    await ctx.reply("You already completed today's task. Rest up, tomorrow brings a new challenge.");
     return true;
   }
 
