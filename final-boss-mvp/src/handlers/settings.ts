@@ -120,14 +120,32 @@ export async function handleSettingsMessage(ctx: Context): Promise<boolean> {
         aiModel: session.model!,
       };
 
-      // Test the config before saving
+      // Test the config before saving — just verify the API is reachable
       await ctx.reply("Testing your config...");
       try {
-        await chat("You are a helpful assistant.", [{ role: "user", content: "Reply with exactly: ok" }], cfg);
-      } catch (err) {
-        await ctx.reply(`Config test failed: ${err instanceof Error ? err.message : String(err)}\n\nCheck your key, URL, and model name, then /settings_reset to try again.`);
-        pending.delete(ctx.from.id);
-        return true;
+        const openai = new (await import("openai")).default({
+          baseURL: cfg.aiBaseUrl ?? undefined,
+          apiKey: cfg.aiApiKey,
+        });
+        await openai.chat.completions.create({
+          model: cfg.aiModel,
+          max_tokens: 5,
+          messages: [{ role: "user", content: "hi" }],
+        });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        // 401/403 = bad key, 404 = bad model — surface those; ignore empty choices
+        if (/401|403|unauthorized|invalid.*key/i.test(msg)) {
+          await ctx.reply(`Invalid API key. Check it and /settings_reset to try again.`);
+          pending.delete(ctx.from.id);
+          return true;
+        }
+        if (/404|not found|model/i.test(msg)) {
+          await ctx.reply(`Model "${cfg.aiModel}" not found. Check the name and /settings_reset to try again.`);
+          pending.delete(ctx.from.id);
+          return true;
+        }
+        // Other errors (network, empty response) - save anyway, let first real use surface it
       }
 
       await upsertUserAIConfig(user.id, cfg);
