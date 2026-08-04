@@ -83,8 +83,8 @@ export async function chat(system: string, messages: Msg[], userConfig?: UserAIC
       max_tokens: 1024,
       messages: [{ role: "system", content: system }, ...messages],
     });
-    const text = response.choices[0]?.message?.content ?? "";
-    if (!text) throw new Error("Unexpected response");
+    const text = response.choices?.[0]?.message?.content ?? "";
+    if (!text) throw new Error(`Unexpected response: ${JSON.stringify(response).slice(0, 200)}`);
     return stripThinking(text);
   }
 
@@ -116,8 +116,8 @@ export async function chatJSON<T>(system: string, messages: Msg[], userConfig?: 
       ],
       response_format: { type: "json_object" },
     });
-    const text = response.choices[0]?.message?.content ?? "";
-    if (!text) throw new Error("Unexpected response");
+    const text = response.choices?.[0]?.message?.content ?? "";
+    if (!text) throw new Error(`Unexpected response: ${JSON.stringify(response).slice(0, 200)}`);
     return JSON.parse(stripThinking(text)) as T;
   }
 
