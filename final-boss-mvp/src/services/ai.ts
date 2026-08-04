@@ -15,34 +15,36 @@ export type UserAIConfig = {
 };
 
 // Strip thinking/reasoning emitted by verbose models before the actual reply.
-// Strategy: split into sentences, classify each as self-talk or user-facing,
-// return the longest contiguous run of user-facing sentences.
 function stripThinking(text: string): string {
   // 1. Tagged blocks (<think>...</think>)
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trimStart();
   if (!text) return text;
 
-  // 2. Split into sentences at punctuation boundaries followed by whitespace + uppercase
-  const sentences = text.split(/(?<=[.?!])\s+(?=[A-Z])/);
-  if (sentences.length <= 1) return text;
+  // 2. Labeled prefix blocks: "Plan:", "Thinking Process:", "Analysis:", etc.
+  //    Remove everything from the label up to a double-newline boundary before user-facing text.
+  text = text.replace(/^(Plan|Thinking Process|Thinking|Analysis|Reasoning|Internal|Notes?|Step \d+)\s*:.*?(?=\n\n)/gis, "").trimStart();
 
-  const selfTalkRe = /^(the user|i need to|i should|i will|i must|i have to|my goal|my immediate|since i|since the|first step|next step|let me|now i|here'?s my|my approach|my plan|i'll |i can |okay|alright|\d+\.\s)/i;
+  // 3. Split into paragraphs (double newline) and classify each
+  const paragraphs = text.split(/\n\n+/).filter((p) => p.trim());
+  if (paragraphs.length <= 1) return text.trim();
 
-  function isSelfTalk(s: string): boolean {
-    const t = s.trim();
+  const selfTalkRe = /^(the user|they (are|have|currently|provided|feel|want)|i need to|i should|i will|i must|i have to|my (goal|immediate|first|next)|since (i|the)|first step|next step|let me|now i|here'?s my|my (approach|plan)|i'll |i can |okay|alright|goal:|focus:|next:|strategy:|\d+\.\s+\*\*)/im;
+
+  function isSelfTalk(p: string): boolean {
+    const t = p.trim();
     if (!t) return true;
     if (selfTalkRe.test(t)) return true;
-    // Sentence chunks that are part of a numbered list (end with \n<digit>. or contain \n<digit>.)
-    if (/\n\d+\.\s*$/.test(s)) return true;
-    // Numbered list items within a sentence chunk
+    // Numbered list reasoning (1. **Bold label**: explanation)
     const lines = t.split("\n").filter((l) => l.trim());
     if (lines.length > 1 && lines.every((l) => /^\d+\.\s/.test(l.trim()))) return true;
+    // Third-person narration about "the user" or "they"
+    if (/^(they|the user)\b/i.test(t) && t.length < 200) return true;
     return false;
   }
 
-  const classified = sentences.map((s) => ({ text: s, selfTalk: isSelfTalk(s) }));
+  const classified = paragraphs.map((p) => ({ text: p, selfTalk: isSelfTalk(p) }));
 
-  // Find longest contiguous run of non-self-talk sentences
+  // Find longest contiguous run of non-self-talk paragraphs
   let bestStart = -1, bestLen = 0, curStart = -1, curLen = 0;
   for (let i = 0; i < classified.length; i++) {
     if (!classified[i]!.selfTalk) {
@@ -54,11 +56,11 @@ function stripThinking(text: string): string {
     }
   }
 
-  if (bestStart >= 0 && bestLen < sentences.length) {
-    return classified.slice(bestStart, bestStart + bestLen).map((c) => c.text).join(" ").trim();
+  if (bestStart >= 0 && bestLen < paragraphs.length) {
+    return classified.slice(bestStart, bestStart + bestLen).map((c) => c.text).join("\n\n").trim();
   }
 
-  return text;
+  return text.trim();
 }
 
 function getClients(userConfig?: UserAIConfig) {
@@ -78,10 +80,11 @@ export async function chat(system: string, messages: Msg[], userConfig?: UserAIC
   const { provider, model, anthropic, openai } = getClients(userConfig);
 
   if (provider === "openai") {
+    const noThinkSuffix = "\n\nIMPORTANT: Output ONLY your direct reply to the user. No thinking, no planning, no internal monologue, no labels like 'Plan:' or 'Analysis:'. Just your response.";
     const response = await openai.chat.completions.create({
       model,
       max_tokens: 1024,
-      messages: [{ role: "system", content: system }, ...messages],
+      messages: [{ role: "system", content: system + noThinkSuffix }, ...messages],
     });
     const text = response.choices?.[0]?.message?.content ?? "";
     if (!text) throw new Error(`Unexpected response: ${JSON.stringify(response).slice(0, 200)}`);

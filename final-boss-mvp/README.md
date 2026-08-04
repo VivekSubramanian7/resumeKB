@@ -1,16 +1,74 @@
-# Final Boss — Telegram MVP
+# Final Boss - Telegram MVP
 
 A personal transformation Telegram bot. It onboards users via an AI-driven conversation, assigns them an archetype, builds a skill tree, delivers daily tasks, tracks streaks, and gates continued access behind a 7-day accountability trial.
 
+## How It Works
+
+### User Journey
+
+```
+/start
+  |
+  v
+"Who is the final boss version of you?"
+  |
+  v
+AI asks 3-5 clarifying questions (one at a time)
+  |
+  v
+"Who are you today?" (current self)
+  |
+  v
+Archetype assigned (e.g. Bold Entrepreneur, Stoic Leader)
+  |
+  v
+Skill tree generated (root branches + child nodes)
+  |
+  v
+User picks a branch --> Trial starts
+  |
+  v
+[Daily loop for 7 days]
+  07:00 UTC  Morning task delivered
+  User replies "done" + optional reflection
+  20:00 UTC  Evening check-in prompt
+  00:00 UTC  Trial evaluation (day 7+)
+  |
+  v
+5/7 tasks completed? --> PASSED (daily loop continues)
+Less than 5?         --> FAILED (14-day cooldown, then re-entry via /start)
+```
+
+### Onboarding States
+
+| Status | What happens |
+|---|---|
+| `not_started` | User hasn't sent `/start` yet |
+| `awaiting_final_boss` | Bot asked "Who do you want to become?" - waiting for answer |
+| `clarifying` | AI is asking follow-up questions to understand the goal |
+| `awaiting_current_self` | Bot asked "Who are you today?" - waiting for answer |
+| `assigning` | AI is computing archetype |
+| `generating_tree` | AI is building the skill tree |
+| `selecting_branch` | User is choosing which branch to start |
+| `complete` | Onboarding done, daily loop active |
+
+### Per-User LLM Config
+
+Users can bring their own API key via `/settings`. This lets them use any OpenAI-compatible endpoint (LM Studio, Groq, Together, etc.) instead of the server default. Settings are stored in a separate `user_llm_settings` table and passed through all AI calls.
+
+Commands: `/settings`, `/settings_reset`, `/settings_clear`
+
 ## Features
 
-- **AI onboarding** — conversational clarification of your "Final Boss" goal and current self, ending with archetype assignment and a personalized skill tree (9–12 nodes)
-- **Daily tasks** — morning delivery, evening check-in prompt, completion via text or inline button
-- **Streak tracking** — consecutive completion days tracked per user
-- **7-day trial gate** — users must complete 5 of 7 trial days to continue; failed users enter a 14-day cooldown before re-entry
-- **Scheduled jobs** — morning (07:00 UTC), evening (20:00 UTC), midnight (00:00 UTC) cron jobs
-- **Health check** — `GET /health` on Fastify for Railway uptime monitoring
-- **Dual AI provider** — Anthropic Claude (production) or any OpenAI-compatible API like LM Studio (local dev)
+- **AI onboarding** - conversational clarification of your "Final Boss" goal and current self, ending with archetype assignment and a personalized skill tree (9-12 nodes)
+- **Daily tasks** - morning delivery, evening check-in prompt, completion via text or inline button
+- **Streak tracking** - consecutive completion days tracked per user
+- **7-day trial gate** - users must complete 5 of 7 trial days to continue; failed users enter a 14-day cooldown before re-entry
+- **Per-user LLM settings** - users can configure their own provider/key/model via `/settings`
+- **Scheduled jobs** - morning (07:00 UTC), evening (20:00 UTC), midnight (00:00 UTC) cron jobs
+- **Health check** - `GET /health` on Fastify for Railway uptime monitoring
+- **Dual AI provider** - Anthropic Claude (production) or any OpenAI-compatible API like LM Studio (local dev)
+- **Thinking/reasoning filter** - strips internal monologue from verbose local models before sending to user
 
 ## Tech Stack
 
@@ -30,23 +88,25 @@ A personal transformation Telegram bot. It onboards users via an AI-driven conve
 ```
 final-boss-mvp/
 ├── src/
-│   ├── index.ts              # Entry point — starts Fastify + bot
+│   ├── index.ts              # Entry point - Fastify health check, migrations, bot start
 │   ├── bot.ts                # grammY bot assembly, message routing
 │   ├── config.ts             # Env var validation and defaults
 │   ├── db/
 │   │   ├── schema.ts         # Drizzle table definitions
 │   │   ├── client.ts         # postgres.js + Drizzle client
-│   │   └── migrate.ts        # Migration runner
+│   │   └── migrate.ts        # Migration runner (standalone)
 │   ├── handlers/
 │   │   ├── start.ts          # /start command
 │   │   ├── onboarding.ts     # Onboarding state machine
 │   │   ├── daily.ts          # Task completion text detection
-│   │   └── callbacks.ts      # Inline button callbacks
+│   │   ├── callbacks.ts      # Inline button callbacks
+│   │   └── settings.ts       # /settings wizard (per-user LLM config)
 │   ├── services/
-│   │   ├── ai.ts             # chat() and chatJSON() — provider-switched
+│   │   ├── ai.ts             # chat() and chatJSON() - provider-switched, thinking filter
 │   │   ├── onboarding.ts     # Onboarding business logic
 │   │   ├── tasks.ts          # Task generation, completion, streak
-│   │   └── trial.ts          # Trial evaluation logic
+│   │   ├── trial.ts          # Trial evaluation logic
+│   │   └── llmSettings.ts    # CRUD for per-user LLM settings
 │   ├── prompts/
 │   │   ├── assessor.ts       # Onboarding + archetype prompts
 │   │   ├── architect.ts      # Skill tree generation prompt
@@ -69,9 +129,10 @@ final-boss-mvp/
 | Table | Key columns |
 |---|---|
 | `users` | `telegramId`, `onboardingStatus`, `trialStatus`, `currentStreak`, `clarifyingAnswers` (jsonb), `archetype`, `trialStartDate` |
-| `skillNodes` | `userId`, `parentNodeId` (self-ref), `title`, `status` (locked/available/active/completed), `orderIndex` |
-| `dailyTasks` | `userId`, `skillNodeId`, `taskText`, `taskType`, `status`, `assignedDate`, `reflection` |
-| `checkIns` | `userId`, `date`, `messages` (jsonb), `extractedSignals` (jsonb) |
+| `skill_nodes` | `userId`, `parentNodeId` (self-ref), `title`, `status` (locked/available/active/completed), `orderIndex` |
+| `daily_tasks` | `userId`, `skillNodeId`, `taskText`, `taskType`, `status`, `assignedDate`, `reflection` |
+| `check_ins` | `userId`, `date`, `messages` (jsonb), `extractedSignals` (jsonb) |
+| `user_llm_settings` | `userId` (unique), `aiProvider`, `aiBaseUrl`, `aiApiKey`, `aiModel` |
 
 ## Setup
 
@@ -151,9 +212,9 @@ When `AI_PROVIDER` is unset or `"anthropic"`, the Anthropic SDK is used and `AI_
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string |
-| `TELEGRAM_BOT_TOKEN` | Yes | — | Token from @BotFather |
-| `ANTHROPIC_API_KEY` | Prod only | — | Anthropic API key |
+| `DATABASE_URL` | Yes | - | PostgreSQL connection string |
+| `TELEGRAM_BOT_TOKEN` | Yes | - | Token from @BotFather |
+| `ANTHROPIC_API_KEY` | Prod only | - | Anthropic API key |
 | `AI_MODEL` | No | `claude-sonnet-4-6-20250514` | Model name for the active provider |
 | `AI_PROVIDER` | No | `anthropic` | `anthropic` or `openai` |
 | `AI_BASE_URL` | No | `http://localhost:1234/v1` | Base URL when `AI_PROVIDER=openai` |
@@ -199,7 +260,7 @@ When `AI_PROVIDER` is unset or `"anthropic"`, the Anthropic SDK is used and `AI_
    railway up
    ```
 
-Railway uses `railway.toml` — it runs `pnpm install && pnpm build && pnpm db:migrate` on build, then `node dist/index.js`. The `/health` endpoint is used for uptime checks.
+Railway uses `railway.toml` - it runs `pnpm install && pnpm build` on build, then `node dist/index.js`. Migrations run automatically at startup (after the health check server is up). The `/health` endpoint is used for uptime checks.
 
 ## Cron Schedule (UTC)
 
