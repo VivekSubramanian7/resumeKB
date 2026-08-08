@@ -35,6 +35,75 @@ RULES:
 - Never break character or mention you're an AI.
 - Output ONLY your response as Alex. No thinking, no labels, no quotes around it.`;
 
+// ─── Assertion Engine ─────────────────────────────────────────────────────────
+
+interface Assertion {
+  name: string;
+  check: (botMessage: string) => { pass: boolean; detail?: string };
+}
+
+const ASSERTIONS: Assertion[] = [
+  {
+    name: "no-third-person-narration",
+    check: (msg) => {
+      const patterns = [/^the user/im, /^they (are|have|want|need|feel)/im, /^i need to/im, /^i should/im, /^my (goal|plan|approach)/im];
+      const match = patterns.find(p => p.test(msg));
+      return { pass: !match, detail: match ? `Matched: ${match.source}` : undefined };
+    }
+  },
+  {
+    name: "no-thinking-labels",
+    check: (msg) => {
+      const labels = /^(Plan|Thinking|Analysis|Reasoning|Understanding|Context|Notes?|Step \d+)\s*:/im;
+      const match = labels.test(msg);
+      return { pass: !match, detail: match ? "Contains thinking label prefix" : undefined };
+    }
+  },
+  {
+    name: "message-length-reasonable",
+    check: (msg) => {
+      const pass = msg.length < 500;
+      return { pass, detail: pass ? undefined : `${msg.length} chars (max 500)` };
+    }
+  },
+  {
+    name: "no-empty-response",
+    check: (msg) => ({ pass: msg.trim().length > 0 })
+  },
+];
+
+// Track assertion results
+const assertionResults: { turn: number; name: string; pass: boolean; detail?: string }[] = [];
+let turnCounter = 0;
+
+function runAssertions(botMessage: string) {
+  turnCounter++;
+  for (const assertion of ASSERTIONS) {
+    const result = assertion.check(botMessage);
+    assertionResults.push({ turn: turnCounter, name: assertion.name, pass: result.pass, detail: result.detail });
+    if (!result.pass) {
+      log(`   [assertion FAIL] ${assertion.name}${result.detail ? ` — ${result.detail}` : ""}`);
+    }
+  }
+  const passed = ASSERTIONS.filter(a => assertionResults.filter(r => r.turn === turnCounter && r.name === a.name && r.pass).length > 0).length;
+  log(`   [assertions: ${passed}/${ASSERTIONS.length} passed]`);
+}
+
+// ─── Tree Validation ──────────────────────────────────────────────────────────
+
+function validateTree(nodes: SkillNode[]): { pass: boolean; issues: string[] } {
+  const issues: string[] = [];
+  const roots = nodes.filter(n => !n.parentNodeId);
+  if (roots.length !== 3) issues.push(`Expected 3 root nodes, got ${roots.length}`);
+  for (const root of roots) {
+    const children = nodes.filter(n => n.parentNodeId === root.id);
+    if (children.length < 2 || children.length > 3) {
+      issues.push(`"${root.title}" has ${children.length} children (expected 2-3)`);
+    }
+  }
+  return { pass: issues.length === 0, issues };
+}
+
 // ─── In-Memory Store ──────────────────────────────────────────────────────────
 
 interface User {
@@ -110,6 +179,7 @@ function botSay(text: string, buttons?: { label: string; data: string }[]) {
       log(`   → ${btn.label}`);
     }
   }
+  runAssertions(text);
 }
 
 // ─── Simulated User LLM ──────────────────────────────────────────────────────
@@ -224,7 +294,7 @@ async function handleCurrentSelf(userId: string, description: string): Promise<s
   updateUser(userId, {
     archetype: result.archetype,
     archetypeExplanation: result.explanation,
-    onboardingStatus: "generating_tree",
+    onboardingStatus: "confirming_archetype",
   });
 
   return result.explanation;
@@ -438,28 +508,19 @@ async function send(text: string) {
     const explanation = await handleCurrentSelf(user.id, text);
     const updatedUser = getUserById(user.id)!;
     const archetypeName = (updatedUser.archetype || "").replace(/-/g, " ").toUpperCase();
-    botSay(`Your archetype: ${archetypeName}\n\n${explanation}`);
-    botSay("Generating your skill tree...");
+    const archetypeMsg = `Your archetype: ${archetypeName}\n\n${explanation}`;
+    const confirmButtons = [
+      { label: "✅ Confirm", data: "confirm_archetype" },
+      { label: "🔄 Retry", data: "retry_archetype" },
+    ];
+    botSay(archetypeMsg, confirmButtons);
+    lastBotMessage = archetypeMsg;
+    lastButtons = confirmButtons;
+    return;
+  }
 
-    const nodes = await generateTree(user.id);
-    const rootNodes = nodes.filter((n) => !n.parentNodeId);
-
-    lastButtons = rootNodes.map((node) => ({
-      label: `${node.title}`,
-      data: `select_branch:${node.id}`,
-    }));
-
-    const treeText = rootNodes
-      .map((r) => {
-        const ch = nodes.filter((n) => n.parentNodeId === r.id);
-        const childList = ch.map((c) => `  → ${c.title}`).join("\n");
-        return `🌟 ${r.title}\n${r.description}\n${childList}`;
-      })
-      .join("\n\n");
-
-    const msg = `Here's your path:\n\n${treeText}\n\nChoose your first branch:`;
-    botSay(msg, lastButtons);
-    lastBotMessage = msg;
+  if (user.onboardingStatus === "confirming_archetype") {
+    botSay("You can confirm or retry your archetype using the buttons above.");
     return;
   }
 
@@ -497,6 +558,46 @@ async function send(text: string) {
   botSay("Send /start to begin.");
 }
 
+// ─── Callback Handler ─────────────────────────────────────────────────────────
+
+async function handleCallback(userId: string, data: string) {
+  if (data === "confirm_archetype") {
+    updateUser(userId, { onboardingStatus: "generating_tree" });
+    botSay("Generating your skill tree...");
+
+    const nodes = await generateTree(userId);
+    const rootNodes = nodes.filter((n) => !n.parentNodeId);
+
+    lastButtons = rootNodes.map((node) => ({
+      label: `${node.title}`,
+      data: `select_branch:${node.id}`,
+    }));
+
+    const treeText = rootNodes
+      .map((r) => {
+        const ch = nodes.filter((n) => n.parentNodeId === r.id);
+        const childList = ch.map((c) => `  → ${c.title}`).join("\n");
+        return `🌟 ${r.title}\n${r.description}\n${childList}`;
+      })
+      .join("\n\n");
+
+    const msg = `Here's your path:\n\n${treeText}\n\nChoose your first branch:`;
+    botSay(msg, lastButtons);
+    lastBotMessage = msg;
+  } else if (data === "retry_archetype") {
+    updateUser(userId, { onboardingStatus: "awaiting_current_self", archetype: null, archetypeExplanation: null });
+    const msg = "Let's try again. Who are you today?\n\nBe honest about your current reality.";
+    botSay(msg);
+    lastBotMessage = msg;
+  } else if (data.startsWith("select_branch:")) {
+    const nodeId = data.replace("select_branch:", "");
+    selectBranch(userId, nodeId);
+    const msg = "Your journey begins now.\n\nEvery morning you'll get a task. Complete it, then tell me 'done'.\n\nEvery evening I'll check in with you.\n\nYou have 7 days. Complete 5 tasks to stay in the program.\n\nFirst task arrives tomorrow morning. Get some rest.";
+    botSay(msg);
+    lastBotMessage = msg;
+  }
+}
+
 // ─── Conversation Driver ──────────────────────────────────────────────────────
 
 async function runConversation() {
@@ -507,6 +608,14 @@ async function runConversation() {
   log(`  Base URL: ${config.aiBaseUrl}`);
   log(`  Mode: LLM generates user responses (not scripted)`);
   log("═══════════════════════════════════════════════════════════\n");
+
+  // Debug hook — logs raw vs cleaned LLM output when they differ
+  ai.setDebugHook((raw, cleaned) => {
+    if (raw !== cleaned) {
+      log(`   [raw]: ${raw.slice(0, 200)}...`);
+      log(`   [cleaned]: ${cleaned.slice(0, 200)}`);
+    }
+  });
 
   // Step 1: /start
   await send("/start");
@@ -545,6 +654,13 @@ async function runConversation() {
     await send(currentSelf);
   }
 
+  // Step 4b: Archetype confirmation — auto-confirm
+  const userAfterCurrent = getUserById(store.users[0]?.id ?? "");
+  if (userAfterCurrent?.onboardingStatus === "confirming_archetype") {
+    log("\n📍 Auto-confirming archetype...");
+    await handleCallback(store.users[0]!.id, "confirm_archetype");
+  }
+
   // Step 5: Select first branch
   const userAfterTree = getUserById(store.users[0]?.id ?? "");
   if (userAfterTree?.onboardingStatus === "selecting_branch") {
@@ -577,14 +693,38 @@ async function runConversation() {
   log("═══════════════════════════════════════════════════════════");
   log(`  Total exchanges: ${conversationHistory.length}`);
   log(`  Clarifying turns: ${clarifyTurns}`);
+
+  const totalAssertions = assertionResults.length;
+  const passedAssertions = assertionResults.filter(r => r.pass).length;
+  log(`  Assertions passed: ${passedAssertions}/${totalAssertions}`);
+
+  const failures = assertionResults.filter(r => !r.pass);
+  if (failures.length > 0) {
+    log("  Failures:");
+    for (const f of failures) {
+      log(`    - Turn ${f.turn}: ${f.name}${f.detail ? ` — ${f.detail}` : ""}`);
+    }
+  }
+
   const user = getUserById(store.users[0]?.id ?? "");
   if (user) {
     log(`  Final status: ${user.onboardingStatus}`);
     log(`  Archetype: ${user.archetype ?? "none"}`);
     log(`  Streak: ${user.currentStreak}`);
-    const rootNodes = store.skillNodes.filter(n => n.userId === user.id && !n.parentNodeId);
-    log(`  Skill tree roots: ${rootNodes.length} (expected 3)`);
-    log(`  Total nodes: ${store.skillNodes.filter(n => n.userId === user.id).length}`);
+
+    const userNodes = store.skillNodes.filter(n => n.userId === user.id);
+    const treeValidation = validateTree(userNodes);
+    log(`  Skill tree: ${treeValidation.pass ? "✓ valid" : "✗ INVALID"}`);
+    if (!treeValidation.pass) {
+      for (const issue of treeValidation.issues) {
+        log(`    - ${issue}`);
+      }
+    }
+
+    const latestTask = store.dailyTasks.filter(t => t.userId === user.id).slice(-1)[0];
+    if (latestTask) {
+      log(`  Last task: "${latestTask.taskText.slice(0, 80)}..."`);
+    }
   }
   log("═══════════════════════════════════════════════════════════");
 
