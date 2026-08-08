@@ -119,13 +119,41 @@ export async function generateTree(userId: string): Promise<typeof skillNodes.$i
   const treeInput = `Archetype: ${user.archetype}\nGoal: ${user.finalBossDescription}\nCurrent: ${user.currentSelfDescription}\nDimensions identified during assessment.`;
 
   const userConfig = await getUserAIConfigByUserId(userId);
-  const result = await ai.chatJSON<{
+  let result = await ai.chatJSON<{
     nodes: { title: string; description: string; estimatedDays: number; parentTitle: string | null; orderIndex: number }[];
   }>(TREE_SYSTEM, [{ role: "user", content: treeInput }], userConfig);
 
+  // Validate: exactly 3 root nodes
+  let roots = result.nodes.filter((n) => !n.parentTitle);
+  if (roots.length > 3) {
+    roots = roots.slice(0, 3);
+    result.nodes = [
+      ...roots,
+      ...result.nodes.filter((n) => n.parentTitle && roots.some(r => r.title === n.parentTitle)),
+    ];
+  }
+  if (roots.length < 3) {
+    // Re-prompt once
+    const retryResult = await ai.chatJSON<typeof result>(
+      TREE_SYSTEM + "\n\nYou MUST return EXACTLY 3 top-level branches (parentTitle: null). You returned " + roots.length + " last time.",
+      [{ role: "user", content: treeInput }],
+      userConfig,
+    );
+    result = retryResult;
+  }
+
+  // Validate: each root has 2-3 children
+  for (const root of roots) {
+    const children = result.nodes.filter(n => n.parentTitle === root.title);
+    if (children.length > 3) {
+      // Keep only first 3
+      const toRemove = children.slice(3);
+      result.nodes = result.nodes.filter(n => !toRemove.includes(n));
+    }
+  }
+
   // Insert root nodes first
   const nodeMap = new Map<string, string>();
-  const roots = result.nodes.filter((n) => !n.parentTitle);
 
   for (const node of roots) {
     const [inserted] = await db.insert(skillNodes).values({
