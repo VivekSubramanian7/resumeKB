@@ -53,5 +53,6 @@ Rules:
 - Keep to 2-3 exchanges MAX
 - Short Telegram-friendly messages
 - Warm but direct. Wise friend energy.
-- End with encouragement or a provocative thought for tomorrow.`;
+- End with encouragement or a provocative thought for tomorrow.
+- Wrap your entire response in <reply></reply> tags.`;
 }

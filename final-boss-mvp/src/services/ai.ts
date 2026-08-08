@@ -20,6 +20,10 @@ export type UserAIConfig = {
 
 // Strip thinking/reasoning emitted by verbose models before the actual reply.
 function stripThinking(text: string): string {
+  // 0. If model wrapped response in <reply> tags, extract only that
+  const replyMatch = text.match(/<reply>([\s\S]*?)<\/reply>/i);
+  if (replyMatch && replyMatch[1]) return replyMatch[1].trim();
+
   // 1. Tagged blocks (<think>...</think>)
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, "").trimStart();
   if (!text) return text;
