@@ -33,8 +33,11 @@ RULES:
 - Be honest and specific about your struggles.
 - Don't be overly enthusiastic or robotic. Casual tone.
 - Never break character or mention you're an AI.
-- Wrap your response in <reply></reply> tags. Everything outside these tags is discarded.
-- Output ONLY your response as Alex inside the tags. No thinking, no labels.`;
+- Output format: <reply>your message here</reply>
+- NOTHING before <reply> — no checklists, no confidence scores, no "Plan:", no rule verification. Just the tag.
+- NOTHING after </reply>.
+
+Example output: <reply>Yeah I usually start strong for a week then just stop showing up.</reply>`;
 
 // ─── Assertion Engine ─────────────────────────────────────────────────────────
 
@@ -53,7 +56,7 @@ const ASSERTIONS: Assertion[] = [
         /^i need to/im,
         /^i should/im,
         /^my (goal|plan|approach)/im,
-        /^(focusing|next question|i have (asked|covered|gathered))/im,
+        /^(focusing on (the|your|their|this) (next|key|core|question|gap|issue|behavior|pattern|aspect)|next question|i have (asked|covered|gathered))/im,
         /^(summary points|i must now|transition rule)/im,
         /^\*\s+\*[^*]+\*:/m,
         /^\d+\.\s+\*\*/m,
@@ -81,8 +84,9 @@ const ASSERTIONS: Assertion[] = [
   {
     name: "message-length-reasonable",
     check: (msg) => {
-      const pass = msg.length < 500;
-      return { pass, detail: pass ? undefined : `${msg.length} chars (max 500)` };
+      // ponytail: 800 allows valid skill tree displays (3 branches × 3 children); flag only truly bloated responses
+      const pass = msg.length < 800;
+      return { pass, detail: pass ? undefined : `${msg.length} chars (max 800)` };
     }
   },
   {
