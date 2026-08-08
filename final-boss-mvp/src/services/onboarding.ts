@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, isNotNull, and } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { users, skillNodes } from "../db/schema.js";
 import * as ai from "./ai.js";
@@ -111,6 +111,20 @@ export async function handleCurrentSelf(userId: string, description: string): Pr
   return result.explanation;
 }
 
+function fuzzyFindParent(parentTitle: string, nodeMap: Map<string, string>): string | null {
+  const exact = nodeMap.get(parentTitle);
+  if (exact) return exact;
+  const normalized = parentTitle.toLowerCase().trim();
+  for (const [key, id] of nodeMap.entries()) {
+    if (key.toLowerCase().trim() === normalized) return id;
+  }
+  // Substring match: if parentTitle contains a root title or vice versa
+  for (const [key, id] of nodeMap.entries()) {
+    if (normalized.includes(key.toLowerCase()) || key.toLowerCase().includes(normalized)) return id;
+  }
+  return null;
+}
+
 export async function generateTree(userId: string): Promise<typeof skillNodes.$inferSelect[]> {
   const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   if (!user) throw new Error("User not found");
@@ -167,9 +181,8 @@ export async function generateTree(userId: string): Promise<typeof skillNodes.$i
   }
 
   // Insert children
-  const children = result.nodes.filter((n) => n.parentTitle);
-  for (const node of children) {
-    const parentId = nodeMap.get(node.parentTitle!) || null;
+  const insertChild = async (node: { title: string; description: string; estimatedDays: number; parentTitle: string | null; orderIndex: number }, parentNodeMap: Map<string, string>) => {
+    const parentId = fuzzyFindParent(node.parentTitle!, parentNodeMap);
     const [inserted] = await db.insert(skillNodes).values({
       userId,
       parentNodeId: parentId,
@@ -179,7 +192,47 @@ export async function generateTree(userId: string): Promise<typeof skillNodes.$i
       orderIndex: node.orderIndex,
       status: "locked",
     }).returning();
-    nodeMap.set(node.title, inserted!.id);
+    parentNodeMap.set(node.title, inserted!.id);
+  };
+
+  const children = result.nodes.filter((n) => n.parentTitle);
+  for (const node of children) {
+    await insertChild(node, nodeMap);
+  }
+
+  // Validate we have enough children; retry once if not
+  const insertedChildRows = await db.select().from(skillNodes).where(and(eq(skillNodes.userId, userId), isNotNull(skillNodes.parentNodeId)));
+  const insertedChildCount = insertedChildRows.length;
+
+  if (insertedChildCount < 6) {
+    // Clear and retry
+    await db.delete(skillNodes).where(eq(skillNodes.userId, userId));
+    const retryResult = await ai.chatJSON<typeof result>(
+      TREE_SYSTEM + "\n\nIMPORTANT: Each of the 3 top-level branches MUST have 2-3 children. Use the EXACT parent title string in the child's parentTitle field. You returned nodes with missing or mismatched parentTitle values last time.",
+      [{ role: "user", content: treeInput }],
+      userConfig,
+    );
+    // Re-insert roots
+    const retryRoots = retryResult.nodes.filter((n) => !n.parentTitle);
+    const retryNodeMap = new Map<string, string>();
+    for (const node of retryRoots) {
+      const [inserted] = await db.insert(skillNodes).values({
+        userId,
+        title: node.title,
+        description: node.description,
+        estimatedDays: node.estimatedDays,
+        orderIndex: node.orderIndex,
+        status: "available",
+      }).returning();
+      retryNodeMap.set(node.title, inserted!.id);
+    }
+    // Re-insert children
+    const retryChildren = retryResult.nodes.filter((n) => n.parentTitle);
+    for (const node of retryChildren) {
+      await insertChild(node, retryNodeMap);
+    }
+    // Use retryResult for time estimate
+    result = retryResult;
   }
 
   // Compute time estimate

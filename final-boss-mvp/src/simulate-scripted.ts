@@ -204,6 +204,20 @@ async function handleCurrentSelf(userId: string, description: string): Promise<s
   return result.explanation;
 }
 
+function fuzzyFindParent(parentTitle: string, nodeMap: Map<string, string>): string | null {
+  const exact = nodeMap.get(parentTitle);
+  if (exact) return exact;
+  const normalized = parentTitle.toLowerCase().trim();
+  for (const [key, id] of nodeMap.entries()) {
+    if (key.toLowerCase().trim() === normalized) return id;
+  }
+  // Substring match: if parentTitle contains a root title or vice versa
+  for (const [key, id] of nodeMap.entries()) {
+    if (normalized.includes(key.toLowerCase()) || key.toLowerCase().includes(normalized)) return id;
+  }
+  return null;
+}
+
 async function generateTree(userId: string): Promise<SkillNode[]> {
   const user = getUserById(userId)!;
   const treeInput = `Archetype: ${user.archetype}\nGoal: ${user.finalBossDescription}\nCurrent: ${user.currentSelfDescription}\nDimensions identified during assessment.`;
@@ -258,7 +272,7 @@ async function generateTree(userId: string): Promise<SkillNode[]> {
   const children = result.nodes.filter((n) => n.parentTitle);
   for (const node of children) {
     const id = randomUUID();
-    const parentId = nodeMap.get(node.parentTitle!) || null;
+    const parentId = fuzzyFindParent(node.parentTitle!, nodeMap);
     store.skillNodes.push({
       id, userId, parentNodeId: parentId,
       title: node.title, description: node.description,
@@ -266,6 +280,44 @@ async function generateTree(userId: string): Promise<SkillNode[]> {
       orderIndex: node.orderIndex, createdAt: new Date(),
     });
     nodeMap.set(node.title, id);
+  }
+
+  // Validate we have enough children; retry once if not
+  const insertedChildren = store.skillNodes.filter(n => n.userId === userId && n.parentNodeId).length;
+
+  if (insertedChildren < 6) {
+    // Clear and retry
+    store.skillNodes = store.skillNodes.filter(n => n.userId !== userId);
+    const retryResult = await ai.chatJSON<typeof result>(
+      TREE_SYSTEM + "\n\nIMPORTANT: Each of the 3 top-level branches MUST have 2-3 children. Use the EXACT parent title string in the child's parentTitle field. You returned nodes with missing or mismatched parentTitle values last time.",
+      [{ role: "user", content: treeInput }],
+      userConfig,
+    );
+    const retryRoots = retryResult.nodes.filter((n) => !n.parentTitle);
+    const retryNodeMap = new Map<string, string>();
+    for (const node of retryRoots) {
+      const id = randomUUID();
+      store.skillNodes.push({
+        id, userId, parentNodeId: null,
+        title: node.title, description: node.description,
+        status: "available", estimatedDays: node.estimatedDays,
+        orderIndex: node.orderIndex, createdAt: new Date(),
+      });
+      retryNodeMap.set(node.title, id);
+    }
+    const retryChildren = retryResult.nodes.filter((n) => n.parentTitle);
+    for (const node of retryChildren) {
+      const id = randomUUID();
+      const parentId = fuzzyFindParent(node.parentTitle!, retryNodeMap);
+      store.skillNodes.push({
+        id, userId, parentNodeId: parentId,
+        title: node.title, description: node.description,
+        status: "locked", estimatedDays: node.estimatedDays,
+        orderIndex: node.orderIndex, createdAt: new Date(),
+      });
+      retryNodeMap.set(node.title, id);
+    }
+    result = retryResult;
   }
 
   const totalDays = result.nodes.reduce((sum, n) => sum + n.estimatedDays, 0);
