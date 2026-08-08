@@ -9,6 +9,10 @@ let debugHook: ((raw: string, cleaned: string) => void) | null = null;
 
 export function setDebugHook(hook: typeof debugHook) { debugHook = hook; }
 
+export class NoAIConfigError extends Error {
+  constructor() { super("No AI provider configured"); this.name = "NoAIConfigError"; }
+}
+
 type Msg = { role: "user" | "assistant"; content: string };
 
 export type UserAIConfig = {
@@ -72,7 +76,11 @@ function stripThinking(text: string): string {
 }
 
 function getClients(userConfig?: UserAIConfig) {
-  if (!userConfig) return { provider: config.aiProvider, model: config.aiModel, anthropic: anthropicClient, openai: openaiClient };
+  if (!userConfig) {
+    const hasServerKey = config.aiProvider === "anthropic" ? !!config.anthropicKey : !!config.openaiKey;
+    if (!hasServerKey) throw new NoAIConfigError();
+    return { provider: config.aiProvider, model: config.aiModel, anthropic: anthropicClient, openai: openaiClient };
+  }
   const provider = userConfig.aiProvider;
   const model = userConfig.aiModel;
   const anthropic = provider === "anthropic"

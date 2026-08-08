@@ -1,6 +1,7 @@
 import { Bot } from "grammy";
 import { eq } from "drizzle-orm";
 import { config } from "./config.js";
+import { NoAIConfigError } from "./services/ai.js";
 import { handleStart } from "./handlers/start.js";
 import { handleOnboardingMessage } from "./handlers/onboarding.js";
 import { handleDailyMessage } from "./handlers/daily.js";
@@ -114,6 +115,18 @@ export function createBot() {
     if (user.onboardingStatus === "not_started") {
       await ctx.reply("Send /start to begin.");
     }
+  });
+
+  bot.catch(async (err) => {
+    const ctx = err.ctx;
+    if (err.error instanceof NoAIConfigError) {
+      await ctx.reply(
+        "I need an AI provider to do that.\n\nUse /settings to configure your API key and model, then try again."
+      ).catch(() => {});
+      return;
+    }
+    // Re-throw so Railway logs the real error
+    throw err;
   });
 
   return bot;
