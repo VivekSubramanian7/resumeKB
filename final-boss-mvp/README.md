@@ -25,7 +25,7 @@ Archetype assigned (e.g. Bold Entrepreneur, Stoic Leader)
 Skill tree generated (root branches + child nodes)
   |
   v
-User picks a branch --> Trial starts
+User picks a branch --> First task delivered immediately --> Trial starts
   |
   v
 [Daily loop for 7 days]
@@ -48,6 +48,7 @@ Less than 5?         --> FAILED (14-day cooldown, then re-entry via /start)
 | `clarifying` | AI is asking follow-up questions to understand the goal |
 | `awaiting_current_self` | Bot asked "Who are you today?" - waiting for answer |
 | `assigning` | AI is computing archetype |
+| `confirming_archetype` | User is confirming (or rejecting) the assigned archetype |
 | `generating_tree` | AI is building the skill tree |
 | `selecting_branch` | User is choosing which branch to start |
 | `complete` | Onboarding done, daily loop active |
@@ -60,15 +61,16 @@ Commands: `/settings`, `/settings_reset`, `/settings_clear`
 
 ## Features
 
-- **AI onboarding** - conversational clarification of your "Final Boss" goal and current self, ending with archetype assignment and a personalized skill tree (9-12 nodes)
+- **AI onboarding** - conversational clarification of your "Final Boss" goal and current self, capped at 3 clarifying questions, ending with archetype confirmation and a personalized skill tree (3 branches × 2-3 children)
+- **First task on signup** - first daily task is generated immediately when the user picks a branch, not the next morning
 - **Daily tasks** - morning delivery, evening check-in prompt, completion via text or inline button
 - **Streak tracking** - consecutive completion days tracked per user
 - **7-day trial gate** - users must complete 5 of 7 trial days to continue; failed users enter a 14-day cooldown before re-entry
-- **Per-user LLM settings** - users can configure their own provider/key/model via `/settings`
+- **Per-user LLM settings** - users can configure their own provider/key/model via `/settings`; bot replies with a setup prompt instead of crashing if no server key is set
 - **Scheduled jobs** - morning (07:00 UTC), evening (20:00 UTC), midnight (00:00 UTC) cron jobs
 - **Health check** - `GET /health` on Fastify for Railway uptime monitoring
 - **Dual AI provider** - Anthropic Claude (production) or any OpenAI-compatible API like LM Studio (local dev)
-- **Thinking/reasoning filter** - strips internal monologue from verbose local models before sending to user
+- **Thinking/reasoning filter** - `<reply>` tag extraction + paragraph classifier strips internal monologue from verbose local models before sending to user
 
 ## Tech Stack
 
@@ -115,6 +117,9 @@ final-boss-mvp/
 │       └── daily.ts          # Cron job registration
 ├── drizzle/
 │   └── migrations/           # Generated SQL migrations
+├── simulate-scripted.ts      # CLI simulator with scripted user responses
+├── simulate-llm.ts           # CLI simulator with LLM-generated user responses + assertions
+├── simulate.ts               # Minimal CLI simulator
 ├── tests/
 │   ├── trial.test.ts         # Trial day number unit tests
 │   └── ai.test.ts            # AI service openai path tests
@@ -214,12 +219,31 @@ When `AI_PROVIDER` is unset or `"anthropic"`, the Anthropic SDK is used and `AI_
 |---|---|---|---|
 | `DATABASE_URL` | Yes | - | PostgreSQL connection string |
 | `TELEGRAM_BOT_TOKEN` | Yes | - | Token from @BotFather |
-| `ANTHROPIC_API_KEY` | Prod only | - | Anthropic API key |
+| `ANTHROPIC_API_KEY` | No* | - | Anthropic API key. If unset, users must configure their own via `/settings` |
 | `AI_MODEL` | No | `claude-sonnet-4-6-20250514` | Model name for the active provider |
 | `AI_PROVIDER` | No | `anthropic` | `anthropic` or `openai` |
 | `AI_BASE_URL` | No | `http://localhost:1234/v1` | Base URL when `AI_PROVIDER=openai` |
 | `OPENAI_API_KEY` | No | `lm-studio` | API key when `AI_PROVIDER=openai` |
 | `PORT` | No | `3000` | HTTP server port |
+
+## Simulators
+
+Three CLI simulators let you test the full onboarding flow locally without a Telegram connection.
+
+| Script | Description |
+|---|---|
+| `pnpm simulate` | Minimal interactive CLI — you type responses manually |
+| `pnpm simulate:scripted` | Scripted user responses — deterministic, fast |
+| `pnpm simulate:llm` | LLM-generated user responses + assertion engine |
+
+The LLM simulator (`simulate:llm`) is the most useful for regression testing. It plays both sides of the conversation using the same configured model, runs 5 per-message assertions (no reasoning leaks, no meta-commentary, length cap), validates the skill tree structure, and prints a summary report.
+
+```bash
+# Run against a local model in LM Studio
+AI_PROVIDER=openai AI_MODEL=google/gemma-4-e4b AI_BASE_URL=http://localhost:1234/v1 pnpm simulate:llm
+```
+
+Expected output: 80/80 assertions pass, skill tree valid (3 roots × 2-3 children each).
 
 ## Scripts
 
