@@ -52,7 +52,7 @@ export async function handleClarifyingAnswer(userId: string, answer: string): Pr
   const userConfig = await getUserAIConfigByUserId(userId);
   const nextResponse = await ai.chat(ASSESSOR_SYSTEM, messages, userConfig);
 
-  const isReady = nextResponse.startsWith("[READY]");
+  const isReady = nextResponse.includes("[READY]");
 
   // Store this Q&A pair (use a placeholder for the question since we don't have it cleanly)
   answers.push({ question: "(previous AI message)", answer });
@@ -63,7 +63,9 @@ export async function handleClarifyingAnswer(userId: string, answer: string): Pr
     onboardingStatus: newStatus,
   }).where(eq(users.id, userId));
 
-  const cleanResponse = isReady ? nextResponse.replace("[READY]", "").trim() : nextResponse;
+  const cleanResponse = isReady
+    ? nextResponse.slice(nextResponse.indexOf("[READY]") + "[READY]".length).trim()
+    : nextResponse;
   return { response: cleanResponse, isReady };
 }
 

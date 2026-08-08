@@ -103,25 +103,77 @@ export async function chat(system: string, messages: Msg[], userConfig?: UserAIC
   return block.text;
 }
 
+function extractJSON<T>(text: string): T | null {
+  // Try parsing the whole thing first
+  try { return JSON.parse(text) as T; } catch {}
+  // Find the outermost balanced braces
+  const start = text.indexOf("{");
+  if (start === -1) return null;
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === "{") depth++;
+    else if (text[i] === "}") {
+      depth--;
+      if (depth === 0) {
+        try { return JSON.parse(text.slice(start, i + 1)) as T; } catch { return null; }
+      }
+    }
+  }
+  return null;
+}
+
 export async function chatJSON<T>(system: string, messages: Msg[], userConfig?: UserAIConfig): Promise<T> {
   const { provider, model, anthropic, openai } = getClients(userConfig);
 
   if (provider === "openai") {
-    const response = await openai.chat.completions.create({
+    const jsonInstruction = "\n\nRespond with valid JSON only. No markdown fences, no explanation, no thinking. Output the JSON object and nothing else.";
+    let text: string;
+    try {
+      const response = await openai.chat.completions.create({
+        model,
+        max_tokens: 2048,
+        messages: [
+          { role: "system", content: system + jsonInstruction },
+          ...messages,
+        ],
+        response_format: { type: "json_object" },
+      });
+      text = response.choices?.[0]?.message?.content ?? "";
+    } catch (err: unknown) {
+      if (err instanceof Error && /json_object|response_format/i.test(err.message)) {
+        const response = await openai.chat.completions.create({
+          model,
+          max_tokens: 2048,
+          messages: [
+            { role: "system", content: system + jsonInstruction },
+            ...messages,
+          ],
+        });
+        text = response.choices?.[0]?.message?.content ?? "";
+      } else {
+        throw err;
+      }
+    }
+    if (!text) throw new Error(`Empty response from model`);
+    const cleaned = stripThinking(text);
+    const parsed = extractJSON<T>(cleaned);
+    if (parsed) return parsed;
+
+    // Retry once with an explicit "you must output JSON" nudge
+    const retryResponse = await openai.chat.completions.create({
       model,
       max_tokens: 2048,
       messages: [
-        {
-          role: "system",
-          content: system + "\n\nRespond with valid JSON only. No markdown fences, no explanation.",
-        },
+        { role: "system", content: system + jsonInstruction },
         ...messages,
+        { role: "assistant", content: text },
+        { role: "user", content: "That was not valid JSON. Output ONLY a JSON object matching the schema above. No markdown, no explanation. Start with { and end with }." },
       ],
-      response_format: { type: "json_object" },
     });
-    const text = response.choices?.[0]?.message?.content ?? "";
-    if (!text) throw new Error(`Unexpected response: ${JSON.stringify(response).slice(0, 200)}`);
-    return JSON.parse(stripThinking(text)) as T;
+    const retryText = retryResponse.choices?.[0]?.message?.content ?? "";
+    const retryParsed = extractJSON<T>(retryText);
+    if (!retryParsed) throw new Error(`No valid JSON found in response: ${cleaned.slice(0, 300)}`);
+    return retryParsed;
   }
 
   // anthropic path
@@ -133,5 +185,7 @@ export async function chatJSON<T>(system: string, messages: Msg[], userConfig?: 
   });
   const block = response.content[0];
   if (!block || block.type !== "text") throw new Error("Unexpected response");
-  return JSON.parse(block.text) as T;
+  const parsed = extractJSON<T>(block.text);
+  if (!parsed) throw new Error(`No valid JSON found in response: ${block.text.slice(0, 300)}`);
+  return parsed;
 }
