@@ -33,7 +33,8 @@ RULES:
 - Be honest and specific about your struggles.
 - Don't be overly enthusiastic or robotic. Casual tone.
 - Never break character or mention you're an AI.
-- Output ONLY your response as Alex. No thinking, no labels, no quotes around it.`;
+- Wrap your response in <reply></reply> tags. Everything outside these tags is discarded.
+- Output ONLY your response as Alex inside the tags. No thinking, no labels.`;
 
 // ─── Assertion Engine ─────────────────────────────────────────────────────────
 
@@ -194,11 +195,19 @@ async function generateUserResponse(botMessage: string, context?: string): Promi
     .join("\n");
 
   const prompt = context
-    ? `${context}\n\nRecent conversation:\n${recentHistory}\n\nBot's latest message: "${botMessage}"\n\nYour response as Alex:`
-    : `Recent conversation:\n${recentHistory}\n\nBot's latest message: "${botMessage}"\n\nRespond naturally as Alex:`;
+    ? `${context}\n\nRecent conversation:\n${recentHistory}\n\nBot's latest message: "${botMessage}"\n\nYour response as Alex (in <reply> tags):`
+    : `Recent conversation:\n${recentHistory}\n\nBot's latest message: "${botMessage}"\n\nRespond naturally as Alex (in <reply> tags):`;
 
   const response = await ai.chat(USER_PERSONA, [{ role: "user", content: prompt }]);
-  const cleaned = response.replace(/^["']|["']$/g, "").trim();
+
+  // ai.chat already extracts <reply> tags via stripThinking.
+  // Fallback: strip common reasoning prefixes that leak through.
+  let cleaned = response
+    .replace(/^(Plan|Strategy|Self-Correction|My goal is to respond|Constraint Check|My persona)[^.!?]*[.!?]\s*/s, "")
+    .replace(/^\*[^*]+\*\s*/gm, "")  // italic internal notes
+    .replace(/^["']|["']$/g, "")
+    .trim();
+
   conversationHistory.push({ role: "user", text: cleaned });
   return cleaned;
 }
