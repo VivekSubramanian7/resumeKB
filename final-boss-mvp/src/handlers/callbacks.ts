@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { users } from "../db/schema.js";
 import { getOrCreateUser, selectBranch, generateTree } from "../services/onboarding.js";
-import { completeTask } from "../services/tasks.js";
+import { completeTask, generateDailyTask } from "../services/tasks.js";
 
 export async function handleCallback(ctx: Context) {
   const data = ctx.callbackQuery?.data;
@@ -21,10 +21,18 @@ export async function handleCallback(ctx: Context) {
         "Your journey begins *now*.\n\n" +
         "Every morning you'll get a task. Complete it, then tell me 'done'.\n\n" +
         "Every evening I'll check in with you.\n\n" +
-        "*You have 7 days. Complete 5 tasks to stay in the program.*\n\n" +
-        "First task arrives tomorrow morning. Get some rest.",
+        "*You have 7 days. Complete 5 tasks to stay in the program.*",
         { parse_mode: "Markdown" }
       );
+      // Generate day 1 task immediately so user doesn't have to wait until morning
+      const task = await generateDailyTask(user.id);
+      const keyboard = new InlineKeyboard()
+        .text("✅ Done", `complete_task:${task.id}`)
+        .text("⏭ Skip", `skip_task:${task.id}`);
+      await ctx.reply(`☀️ *Your first task:*\n\n${task.taskText}\n\nReply "done" when complete.`, {
+        parse_mode: "Markdown",
+        reply_markup: keyboard,
+      });
     } catch {
       await ctx.answerCallbackQuery({ text: "Something went wrong" });
     }
