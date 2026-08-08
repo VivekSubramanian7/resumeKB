@@ -19,8 +19,7 @@ export async function handleSettingsCommand(ctx: Context) {
       ? existing.aiApiKey.slice(0, 4) + "****" + existing.aiApiKey.slice(-4)
       : "****";
     await ctx.reply(
-      `*Current LLM config*\n\nProvider: ${existing.aiProvider}\nBase URL: ${existing.aiBaseUrl ?? "(default)"}\nAPI Key: ${maskedKey}\nModel: ${existing.aiModel}\n\nSend /settings_reset to reconfigure, or /settings_clear to remove and use the server default.`,
-      { parse_mode: "Markdown" }
+      `Current LLM config\n\nProvider: ${existing.aiProvider}\nBase URL: ${existing.aiBaseUrl ?? "(default)"}\nAPI Key: ${maskedKey}\nModel: ${existing.aiModel}\n\nSend /settings_reset to reconfigure, or /settings_clear to remove and use the server default.`
     );
     return;
   }
