@@ -27,7 +27,7 @@ export function startJobs(bot: Bot) {
 
         await bot.api.sendMessage(
           user.telegramId,
-          `☀️ *Day ${dayNum}  - Your task:*\n\n${task.taskText}\n\n_Type: ${task.taskType}_${trialNote}\n\nReply "done" when complete.`,
+          `☀️ *Day ${dayNum}  - Your task:*\n\n${task.taskText}${trialNote}\n\nReply "done" when complete.`,
           { parse_mode: "Markdown" }
         );
       } catch (err) {

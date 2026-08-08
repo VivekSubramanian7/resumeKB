@@ -386,7 +386,13 @@ async function send(text: string) {
       const dayNum = user.trialStartDate
         ? Math.floor((Date.now() - new Date(user.trialStartDate).getTime()) / (24 * 60 * 60 * 1000)) + 1
         : 0;
-      botSay(`📊 Status\n\nArchetype: ${(user.archetype || "").replace(/-/g, " ")}\nTrial: ${user.trialStatus} (day ${dayNum})\nStreak: ${user.currentStreak} 🔥\nTime to Final Boss: ${user.timeToFinalBoss || "?"} days`);
+      const allNodes = store.skillNodes.filter(n => n.userId === user.id);
+      const rootNodesStat = allNodes.filter(n => !n.parentNodeId);
+      const completedBranchesStat = rootNodesStat.filter(n => n.status === "completed").length;
+      const activeBranchStat = rootNodesStat.find(n => n.status === "active");
+      const totalBranchesStat = rootNodesStat.length || 3;
+      const progressLineStat = `Progress: Phase ${completedBranchesStat + 1} of ${totalBranchesStat}${activeBranchStat ? `: ${activeBranchStat.title}` : ""}`;
+      botSay(`📊 Status\n\nArchetype: ${(user.archetype || "").replace(/-/g, " ")}\nTrial: ${user.trialStatus} (day ${dayNum})\nStreak: ${user.currentStreak} 🔥\n${progressLineStat}`);
     }
     return;
   }
@@ -396,7 +402,7 @@ async function send(text: string) {
     if (user.onboardingStatus !== "complete") { botSay("Finish onboarding first."); return; }
     botSay("Generating today's task...");
     const task = await generateDailyTask(user.id);
-    botSay(`☀️ Your task:\n\n${task.taskText}\n\nType: ${task.taskType}\n\nReply "done" when complete.`, [
+    botSay(`☀️ Your task:\n\n${task.taskText}\n\nReply "done" when complete.`, [
       { label: "✅ Done", data: `complete_task:${task.id}` },
       { label: "⏭ Skip", data: `skip_task:${task.id}` },
     ]);
@@ -434,7 +440,7 @@ async function send(text: string) {
     const rootNodes = nodes.filter((n) => !n.parentNodeId);
 
     lastButtons = rootNodes.map((node) => ({
-      label: `${node.title} (${node.estimatedDays}d)`,
+      label: `${node.title}`,
       data: `select_branch:${node.id}`,
     }));
 
@@ -540,7 +546,7 @@ async function runConversation() {
   if (userAfterTree?.onboardingStatus === "selecting_branch") {
     const rootNodes = store.skillNodes.filter((n) => n.userId === userAfterTree.id && !n.parentNodeId);
     if (rootNodes[0]) {
-      const btnLabel = `${rootNodes[0].title} (${rootNodes[0].estimatedDays}d)`;
+      const btnLabel = `${rootNodes[0].title}`;
       await send(`[btn] ${btnLabel}`);
     }
   }

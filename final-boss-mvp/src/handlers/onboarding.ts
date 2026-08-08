@@ -60,7 +60,7 @@ export async function handleOnboardingMessage(ctx: Context) {
       // Show branches as inline keyboard
       const keyboard = new InlineKeyboard();
       for (const node of rootNodes) {
-        keyboard.text(`${node.title} (${node.estimatedDays}d)`, `select_branch:${node.id}`).row();
+        keyboard.text(`${node.title}`, `select_branch:${node.id}`).row();
       }
 
       const treeText = rootNodes

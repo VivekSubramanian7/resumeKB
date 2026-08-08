@@ -52,7 +52,7 @@ export async function handleDailyMessage(ctx: Context) {
     .text("✅ Done", `complete_task:${task.id}`)
     .text("⏭ Skip", `skip_task:${task.id}`);
 
-  await ctx.reply(`Today's task:\n\n*${task.taskText}*\n\nType: ${task.taskType}\n\nReply "done" when finished (+ optional reflection), or tap below:`, {
+  await ctx.reply(`Today's task:\n\n*${task.taskText}*\n\nReply "done" when finished (+ optional reflection), or tap below:`, {
     parse_mode: "Markdown",
     reply_markup: keyboard,
   });

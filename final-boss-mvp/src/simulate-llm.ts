@@ -383,7 +383,13 @@ async function send(text: string) {
       const dayNum = user.trialStartDate
         ? Math.floor((Date.now() - new Date(user.trialStartDate).getTime()) / (24 * 60 * 60 * 1000)) + 1
         : 0;
-      const msg = `📊 Status\n\nArchetype: ${(user.archetype || "").replace(/-/g, " ")}\nTrial: ${user.trialStatus} (day ${dayNum})\nStreak: ${user.currentStreak} 🔥\nTime to Final Boss: ${user.timeToFinalBoss || "?"} days`;
+      const allNodesLlm = store.skillNodes.filter(n => n.userId === user.id);
+      const rootNodesLlm = allNodesLlm.filter(n => !n.parentNodeId);
+      const completedBranchesLlm = rootNodesLlm.filter(n => n.status === "completed").length;
+      const activeBranchLlm = rootNodesLlm.find(n => n.status === "active");
+      const totalBranchesLlm = rootNodesLlm.length || 3;
+      const progressLineLlm = `Progress: Phase ${completedBranchesLlm + 1} of ${totalBranchesLlm}${activeBranchLlm ? `: ${activeBranchLlm.title}` : ""}`;
+      const msg = `📊 Status\n\nArchetype: ${(user.archetype || "").replace(/-/g, " ")}\nTrial: ${user.trialStatus} (day ${dayNum})\nStreak: ${user.currentStreak} 🔥\n${progressLineLlm}`;
       botSay(msg);
       lastBotMessage = msg;
     }
@@ -394,7 +400,7 @@ async function send(text: string) {
     if (user.onboardingStatus !== "complete") { botSay("Finish onboarding first."); return; }
     botSay("Generating today's task...");
     const task = await generateDailyTask(user.id);
-    const msg = `☀️ Your task:\n\n${task.taskText}\n\nType: ${task.taskType}\n\nReply "done" when complete.`;
+    const msg = `☀️ Your task:\n\n${task.taskText}\n\nReply "done" when complete.`;
     const buttons = [
       { label: "✅ Done", data: `complete_task:${task.id}` },
       { label: "⏭ Skip", data: `skip_task:${task.id}` },
@@ -439,7 +445,7 @@ async function send(text: string) {
     const rootNodes = nodes.filter((n) => !n.parentNodeId);
 
     lastButtons = rootNodes.map((node) => ({
-      label: `${node.title} (${node.estimatedDays}d)`,
+      label: `${node.title}`,
       data: `select_branch:${node.id}`,
     }));
 
@@ -544,7 +550,7 @@ async function runConversation() {
   if (userAfterTree?.onboardingStatus === "selecting_branch") {
     const rootNodes = store.skillNodes.filter((n) => n.userId === userAfterTree.id && !n.parentNodeId);
     if (rootNodes[0]) {
-      const btnLabel = `${rootNodes[0].title} (${rootNodes[0].estimatedDays}d)`;
+      const btnLabel = `${rootNodes[0].title}`;
       log(`\n📍 Auto-selecting first branch: "${rootNodes[0].title}"`);
       await send(`[btn] ${btnLabel}`);
     }

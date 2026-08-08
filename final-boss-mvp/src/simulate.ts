@@ -411,7 +411,7 @@ async function routeMessage(text: string) {
     const dayNum = user.trialStartDate
       ? Math.floor((Date.now() - new Date(user.trialStartDate).getTime()) / (24 * 60 * 60 * 1000)) + 1
       : 1;
-    botSay(`☀️ Day ${dayNum} - Your task:\n\n${task.taskText}\n\nType: ${task.taskType}\n\nReply "done" when complete.`, [
+    botSay(`☀️ Day ${dayNum} - Your task:\n\n${task.taskText}\n\nReply "done" when complete.`, [
       { label: "✅ Done", data: `complete_task:${task.id}` },
       { label: "⏭ Skip", data: `skip_task:${task.id}` },
     ]);
@@ -501,12 +501,18 @@ async function handleStatusCommand(user: User) {
   const dayNum = user.trialStartDate
     ? Math.floor((Date.now() - new Date(user.trialStartDate).getTime()) / (24 * 60 * 60 * 1000)) + 1
     : 0;
+  const nodes = store.skillNodes.filter(n => n.userId === user.id);
+  const rootNodes = nodes.filter(n => !n.parentNodeId);
+  const completedBranches = rootNodes.filter(n => n.status === "completed").length;
+  const activeBranch = rootNodes.find(n => n.status === "active");
+  const totalBranches = rootNodes.length || 3;
+  const progressLine = `Progress: Phase ${completedBranches + 1} of ${totalBranches}${activeBranch ? `: ${activeBranch.title}` : ""}`;
   botSay(
     `📊 Status\n\n` +
     `Archetype: ${(user.archetype || "").replace(/-/g, " ")}\n` +
     `Trial: ${user.trialStatus} (day ${dayNum})\n` +
     `Streak: ${user.currentStreak} 🔥\n` +
-    `Time to Final Boss: ${user.timeToFinalBoss || "?"} days`
+    progressLine
   );
 }
 
@@ -543,7 +549,7 @@ async function handleOnboardingMessage(user: User, text: string) {
       const rootNodes = nodes.filter((n) => !n.parentNodeId);
 
       const buttons = rootNodes.map((node) => ({
-        label: `${node.title} (${node.estimatedDays}d)`,
+        label: `${node.title}`,
         data: `select_branch:${node.id}`,
       }));
 
@@ -595,7 +601,7 @@ async function handleDailyMessage(user: User, text: string) {
     return;
   }
 
-  botSay(`Today's task:\n\n${task.taskText}\n\nType: ${task.taskType}\n\nReply "done" when finished (+ optional reflection), or tap below:`, [
+  botSay(`Today's task:\n\n${task.taskText}\n\nReply "done" when finished (+ optional reflection), or tap below:`, [
     { label: "✅ Done", data: `complete_task:${task.id}` },
     { label: "⏭ Skip", data: `skip_task:${task.id}` },
   ]);
