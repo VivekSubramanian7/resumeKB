@@ -5,6 +5,10 @@ import { config } from "../config.js";
 const anthropicClient = new Anthropic({ apiKey: config.anthropicKey });
 const openaiClient = new OpenAI({ baseURL: config.aiBaseUrl, apiKey: config.openaiKey });
 
+let debugHook: ((raw: string, cleaned: string) => void) | null = null;
+
+export function setDebugHook(hook: typeof debugHook) { debugHook = hook; }
+
 type Msg = { role: "user" | "assistant"; content: string };
 
 export type UserAIConfig = {
@@ -86,9 +90,11 @@ export async function chat(system: string, messages: Msg[], userConfig?: UserAIC
       max_tokens: 1024,
       messages: [{ role: "system", content: system + noThinkSuffix }, ...messages],
     });
-    const text = response.choices?.[0]?.message?.content ?? "";
-    if (!text) throw new Error(`Unexpected response: ${JSON.stringify(response).slice(0, 200)}`);
-    return stripThinking(text);
+    const raw = response.choices?.[0]?.message?.content ?? "";
+    if (!raw) throw new Error(`Unexpected response: ${JSON.stringify(response).slice(0, 200)}`);
+    const cleaned = stripThinking(raw);
+    debugHook?.(raw, cleaned);
+    return cleaned;
   }
 
   // anthropic path
