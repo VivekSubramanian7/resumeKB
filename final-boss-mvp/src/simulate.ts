@@ -150,7 +150,7 @@ async function handleClarifyingAnswer(userId: string, answer: string): Promise<{
     cleanResponse = nextResponse;
   }
 
-  answers.push({ question: "(previous AI message)", answer });
+  answers.push({ question: cleanResponse, answer });
   updateUser(userId, {
     clarifyingAnswers: answers,
     onboardingStatus: isReady ? "awaiting_current_self" : "clarifying",

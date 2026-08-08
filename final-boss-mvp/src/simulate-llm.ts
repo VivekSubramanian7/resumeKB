@@ -266,7 +266,7 @@ async function handleClarifyingAnswer(userId: string, answer: string): Promise<{
   const nextResponse = await ai.chat(ASSESSOR_SYSTEM, messages, userConfig);
   const isReady = nextResponse.includes("[READY]");
 
-  answers.push({ question: "(previous AI message)", answer });
+  answers.push({ question: cleanResponse, answer });
   updateUser(userId, {
     clarifyingAnswers: answers,
     onboardingStatus: isReady ? "awaiting_current_self" : "clarifying",

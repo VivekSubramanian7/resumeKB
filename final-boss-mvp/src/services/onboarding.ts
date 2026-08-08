@@ -73,8 +73,7 @@ export async function handleClarifyingAnswer(userId: string, answer: string): Pr
     cleanResponse = nextResponse;
   }
 
-  // Store this Q&A pair (use a placeholder for the question since we don't have it cleanly)
-  answers.push({ question: "(previous AI message)", answer });
+  answers.push({ question: cleanResponse, answer });
 
   const newStatus = isReady ? "awaiting_current_self" : "clarifying";
   await db.update(users).set({
