@@ -8,7 +8,10 @@ import { handleCallback } from "./handlers/callbacks.js";
 import { getOrCreateUser } from "./services/onboarding.js";
 import { handleSettingsCommand, handleSettingsReset, handleSettingsClear, handleSettingsMessage } from "./handlers/settings.js";
 import { db } from "./db/client.js";
-import { skillNodes } from "./db/schema.js";
+import { skillNodes, dailyTasks, users } from "./db/schema.js";
+
+// ponytail: in-memory per-process; fine for single-instance MVP
+const pendingReset = new Set<number>();
 
 export function createBot() {
   const bot = new Bot(config.telegramToken);
@@ -18,6 +21,40 @@ export function createBot() {
   bot.command("settings", handleSettingsCommand);
   bot.command("settings_reset", handleSettingsReset);
   bot.command("settings_clear", handleSettingsClear);
+
+  bot.command("reset", async (ctx) => {
+    if (!ctx.from) return;
+    pendingReset.add(ctx.from.id);
+    await ctx.reply(
+      "⚠️ This will delete your skill tree, daily tasks, and all onboarding progress\\. Your LLM settings are kept\\.\n\n" +
+      "Send /confirm\\_reset to continue, or anything else to cancel\\.",
+      { parse_mode: "MarkdownV2" }
+    );
+  });
+
+  bot.command("confirm_reset", async (ctx) => {
+    if (!ctx.from) return;
+    if (!pendingReset.has(ctx.from.id)) {
+      await ctx.reply("No reset pending. Send /reset first.");
+      return;
+    }
+    pendingReset.delete(ctx.from.id);
+    const user = await getOrCreateUser(ctx.from.id);
+    await db.delete(dailyTasks).where(eq(dailyTasks.userId, user.id));
+    await db.delete(skillNodes).where(eq(skillNodes.userId, user.id));
+    await db.update(users).set({
+      onboardingStatus: "not_started",
+      finalBossDescription: null,
+      currentSelfDescription: null,
+      clarifyingAnswers: [],
+      archetype: null,
+      archetypeExplanation: null,
+      trialStartDate: null,
+      trialStatus: "pending",
+      currentStreak: 0,
+    }).where(eq(users.id, user.id));
+    await ctx.reply("Done. Your progress has been reset. Send /start to begin again.");
+  });
 
   bot.command("status", async (ctx) => {
     if (!ctx.from) return;
