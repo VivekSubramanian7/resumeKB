@@ -47,9 +47,27 @@ const ASSERTIONS: Assertion[] = [
   {
     name: "no-third-person-narration",
     check: (msg) => {
-      const patterns = [/^the user/im, /^they (are|have|want|need|feel)/im, /^i need to/im, /^i should/im, /^my (goal|plan|approach)/im];
+      const patterns = [
+        /^the user/im,
+        /^they (are|have|want|need|feel)/im,
+        /^i need to/im,
+        /^i should/im,
+        /^my (goal|plan|approach)/im,
+        /^(focusing|next question|i have (asked|covered|gathered))/im,
+        /^(summary points|i must now|transition rule)/im,
+        /^\*\s+\*[^*]+\*:/m,
+        /^\d+\.\s+\*\*/m,
+      ];
       const match = patterns.find(p => p.test(msg));
       return { pass: !match, detail: match ? `Matched: ${match.source}` : undefined };
+    }
+  },
+  {
+    name: "no-meta-commentary",
+    check: (msg) => {
+      const meta = /\b(next (question|step|logical)|i('ve| have) (asked|covered|gathered)|warrant the transition|probe (deeper|for)|question focus|constraint check|confidence score)\b/i;
+      const match = meta.test(msg);
+      return { pass: !match, detail: match ? "Contains meta-commentary about conversation process" : undefined };
     }
   },
   {
