@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "simulate": "tsx src/simulate.ts",
-    "simulate:scripted": "tsx src/simulate-scripted.ts"
+    "simulate:scripted": "tsx src/simulate-scripted.ts",
+    "simulate:llm": "tsx src/simulate-llm.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0",

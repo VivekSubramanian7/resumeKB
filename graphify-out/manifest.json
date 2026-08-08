@@ -224,11 +224,6 @@
     "ast_hash": "6406ec713f138a2b9662294c65dfde00",
     "semantic_hash": "6406ec713f138a2b9662294c65dfde00"
   },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-05-voice-first-kb-v2.md": {
-    "mtime": 1783924611.846715,
-    "ast_hash": "dc53b6237b149a65c52e74b440259133",
-    "semantic_hash": "dc53b6237b149a65c52e74b440259133"
-  },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\prompts\\cv_profile.md": {
     "mtime": 1783924611.927361,
     "ast_hash": "e07b3d46a74bf3d8f3d11e8d74469b8a",
@@ -589,39 +584,144 @@
     "ast_hash": "d83e80d4601c1ce53c131f82debb6d31",
     "semantic_hash": "d83e80d4601c1ce53c131f82debb6d31"
   },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-14-frontend-react-migration.md": {
-    "mtime": 1784035932.3990371,
-    "ast_hash": "7025856c6355a743e9810fc31ff2a200",
-    "semantic_hash": "7025856c6355a743e9810fc31ff2a200"
-  },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-14-unified-capture-card.md": {
-    "mtime": 1784051796.7418084,
-    "ast_hash": "4d8c1b5671a73f535e84ab0549ac14e5",
-    "semantic_hash": "4d8c1b5671a73f535e84ab0549ac14e5"
-  },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-15-frontend-wiring-migration.md": {
-    "mtime": 1784096890.1419854,
-    "ast_hash": "55288f5c1ff45473bed829d7f4e8b23b",
-    "semantic_hash": "55288f5c1ff45473bed829d7f4e8b23b"
-  },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\plans\\2026-07-15-probe-feature.md": {
-    "mtime": 1784104777.776008,
-    "ast_hash": "f882e6e0ec52caaf0fde6294f8c18ac5",
-    "semantic_hash": "f882e6e0ec52caaf0fde6294f8c18ac5"
-  },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\specs\\2026-07-15-frontend-migration-wiring.md": {
-    "mtime": 1784096812.2910051,
-    "ast_hash": "a28c7e99c2fa182fb180dac5de4c807b",
-    "semantic_hash": "a28c7e99c2fa182fb180dac5de4c807b"
-  },
-  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\docs\\superpowers\\specs\\2026-07-15-probe-feature-design.md": {
-    "mtime": 1784104517.4163797,
-    "ast_hash": "21ec64cc0d5b5e9adb18526304351f03",
-    "semantic_hash": "21ec64cc0d5b5e9adb18526304351f03"
-  },
   "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\prompts\\probe_generation.md": {
     "mtime": 1784106683.3487995,
     "ast_hash": "846b484ac21b2ca44ad4c2416b69d688",
     "semantic_hash": "846b484ac21b2ca44ad4c2416b69d688"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\drizzle.config.ts": {
+    "mtime": 1784276042.6185827,
+    "ast_hash": "3d5650cfe0224b7b925ad4b79d7889ed",
+    "semantic_hash": "3d5650cfe0224b7b925ad4b79d7889ed"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\package.json": {
+    "mtime": 1784282944.9988804,
+    "ast_hash": "eec5440f3f406bad91137ba2f526c3a9",
+    "semantic_hash": "eec5440f3f406bad91137ba2f526c3a9"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\tsconfig.json": {
+    "mtime": 1784276024.276122,
+    "ast_hash": "c1bfb6d16e27b65265eadcd69f36e824",
+    "semantic_hash": "c1bfb6d16e27b65265eadcd69f36e824"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\drizzle\\migrations\\0000_redundant_invaders.sql": {
+    "mtime": 1784278064.114485,
+    "ast_hash": "831aed29cff80e73ee6fcaabe24b05e6",
+    "semantic_hash": "831aed29cff80e73ee6fcaabe24b05e6"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\drizzle\\migrations\\meta\\0000_snapshot.json": {
+    "mtime": 1784278064.1104894,
+    "ast_hash": "6cd1afa2c5d02e02bdfb7d0387a42783",
+    "semantic_hash": "6cd1afa2c5d02e02bdfb7d0387a42783"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\drizzle\\migrations\\meta\\_journal.json": {
+    "mtime": 1784278064.112501,
+    "ast_hash": "c046affb13c4bdba24e108e5e3e0cd11",
+    "semantic_hash": "c046affb13c4bdba24e108e5e3e0cd11"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\bot.ts": {
+    "mtime": 1784277570.6307802,
+    "ast_hash": "a9818750ad4a4f4f1d2e0cefb67abeba",
+    "semantic_hash": "a9818750ad4a4f4f1d2e0cefb67abeba"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\config.ts": {
+    "mtime": 1784282951.7471762,
+    "ast_hash": "5d97c02940531cba36c0385b51915a25",
+    "semantic_hash": "5d97c02940531cba36c0385b51915a25"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\index.ts": {
+    "mtime": 1784277702.0046554,
+    "ast_hash": "084edd9de767af365bbc8c091c2a318d",
+    "semantic_hash": "084edd9de767af365bbc8c091c2a318d"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\db\\client.ts": {
+    "mtime": 1784276065.928668,
+    "ast_hash": "2be55211f2bacdec6620d9fc12a9eea6",
+    "semantic_hash": "2be55211f2bacdec6620d9fc12a9eea6"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\db\\migrate.ts": {
+    "mtime": 1784276070.569458,
+    "ast_hash": "66c8ff2d099ae3dc0f71940338b403f5",
+    "semantic_hash": "66c8ff2d099ae3dc0f71940338b403f5"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\db\\schema.ts": {
+    "mtime": 1784276061.3542821,
+    "ast_hash": "627908036ac27913140e4dd047dd273b",
+    "semantic_hash": "627908036ac27913140e4dd047dd273b"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\handlers\\callbacks.ts": {
+    "mtime": 1784277024.8291063,
+    "ast_hash": "3f944bfad9025babb3c440c3e294b539",
+    "semantic_hash": "3f944bfad9025babb3c440c3e294b539"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\handlers\\daily.ts": {
+    "mtime": 1784277015.0940814,
+    "ast_hash": "78291519845c7a0840820c064dd60a00",
+    "semantic_hash": "78291519845c7a0840820c064dd60a00"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\handlers\\onboarding.ts": {
+    "mtime": 1784276566.6753397,
+    "ast_hash": "022b925a3dbd1dd7d5cdfa009ed8f0ce",
+    "semantic_hash": "022b925a3dbd1dd7d5cdfa009ed8f0ce"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\handlers\\start.ts": {
+    "mtime": 1784278038.279042,
+    "ast_hash": "e9874cb1711fd199ba7ed212f4e3b620",
+    "semantic_hash": "e9874cb1711fd199ba7ed212f4e3b620"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\jobs\\daily.ts": {
+    "mtime": 1784277387.4809966,
+    "ast_hash": "598dfb8f3d45f3310493c894ea9fabcd",
+    "semantic_hash": "598dfb8f3d45f3310493c894ea9fabcd"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\prompts\\architect.ts": {
+    "mtime": 1784276283.5523293,
+    "ast_hash": "531d3ddacaa40b7476da72fd7c465d71",
+    "semantic_hash": "531d3ddacaa40b7476da72fd7c465d71"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\prompts\\assessor.ts": {
+    "mtime": 1784276275.5376704,
+    "ast_hash": "415b03b72835666f9c21b806d73925a9",
+    "semantic_hash": "415b03b72835666f9c21b806d73925a9"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\prompts\\coach.ts": {
+    "mtime": 1784276295.0329754,
+    "ast_hash": "f5db9fc267117a32b659e6b0906660a1",
+    "semantic_hash": "f5db9fc267117a32b659e6b0906660a1"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\services\\ai.ts": {
+    "mtime": 1784283132.6089048,
+    "ast_hash": "d4f4df73bbef0835cbb0d013a905a82c",
+    "semantic_hash": "d4f4df73bbef0835cbb0d013a905a82c"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\services\\onboarding.ts": {
+    "mtime": 1784278020.226054,
+    "ast_hash": "d502c04e866cfd789ecbb23f39e4e00f",
+    "semantic_hash": "d502c04e866cfd789ecbb23f39e4e00f"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\services\\tasks.ts": {
+    "mtime": 1784278027.6370137,
+    "ast_hash": "d172748b6b96a60a47ca7d1f90d1435b",
+    "semantic_hash": "d172748b6b96a60a47ca7d1f90d1435b"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\src\\services\\trial.ts": {
+    "mtime": 1784277411.8887708,
+    "ast_hash": "20d176cf4a36dc61e0188cf41eb02acb",
+    "semantic_hash": "20d176cf4a36dc61e0188cf41eb02acb"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\tests\\ai.test.ts": {
+    "mtime": 1784283155.5835092,
+    "ast_hash": "9f6a3530112aee628de72b7a916336ed",
+    "semantic_hash": "9f6a3530112aee628de72b7a916336ed"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\tests\\trial.test.ts": {
+    "mtime": 1784278191.9554653,
+    "ast_hash": "67d2d62f094eda0f41358c99835b0689",
+    "semantic_hash": "67d2d62f094eda0f41358c99835b0689"
+  },
+  "C:\\Users\\srivpra\\Documents\\GitHub\\resumeKB\\final-boss-mvp\\README.md": {
+    "mtime": 1784283370.2294955,
+    "ast_hash": "bbd6c86ee7786dcef3aac3e03026526a",
+    "semantic_hash": "bbd6c86ee7786dcef3aac3e03026526a"
   }
 }

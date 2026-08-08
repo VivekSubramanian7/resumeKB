@@ -24,3 +24,4 @@ Task 5: complete (commits a727f2d..96e0aec, review clean after fixes — lte upp
 Task 6: complete (commits 7c2d46b..1a5cc94, review clean after fix — await bot.start() added; SIGTERM handler added for Railway)
 Task 7: manual — documented in plan, requires Railway CLI + live credentials
 Final review fix: commit 3201535 — wasted AI call removed, streak reset guarded, failed-trial cooldown added, drizzle migration files generated and committed
+LM Studio task: complete (commits 7c9fe98..1e67b3c, review clean — openaiClient hoisted to module level, 4 openai path tests added)

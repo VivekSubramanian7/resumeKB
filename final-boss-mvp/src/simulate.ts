@@ -519,7 +519,6 @@ async function handleStatusCommand(user: User) {
 async function handleOnboardingMessage(user: User, text: string) {
   switch (user.onboardingStatus) {
     case "awaiting_final_boss": {
-      botSay("Let me think about that...");
       const response = await handleFinalBossInput(user.id, text);
       botSay(response);
       break;

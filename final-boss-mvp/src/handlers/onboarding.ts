@@ -23,7 +23,7 @@ export async function handleOnboardingMessage(ctx: Context) {
       break;
 
     case "awaiting_final_boss": {
-      await ctx.reply("Let me think about that...");
+      await ctx.replyWithChatAction("typing");
       const response = await handleFinalBossInput(user.id, text);
       await ctx.reply(response);
       break;

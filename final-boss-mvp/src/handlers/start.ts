@@ -57,6 +57,7 @@ export async function handleStart(ctx: Context) {
     "Welcome to *Final Boss*\\.\n\n" +
     "This is a personal transformation program\\. Not an app you open when you feel like it, a commitment\\.\n\n" +
     "You have 7 days to prove you're serious\\. Complete 5 of 7 daily tasks, or you're out\\.\n\n" +
+    "This isn't punishment — it's proof\\. If you can't do 5 micro\\-tasks in a week, the program won't help you\\. This filter exists so your time isn't wasted\\.\n\n" +
     "💡 _Tip: Use /settings to bring your own LLM API key \\(Anthropic, OpenAI, or local\\)\\._\n\n" +
     "Ready? Let's begin\\.\n\n" +
     "*Who is the final boss version of you?*\n\n" +
