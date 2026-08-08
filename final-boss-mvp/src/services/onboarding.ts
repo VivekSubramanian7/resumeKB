@@ -49,10 +49,29 @@ export async function handleClarifyingAnswer(userId: string, answer: string): Pr
   }
 
   messages.push({ role: "user", content: answer });
-  const userConfig = await getUserAIConfigByUserId(userId);
-  const nextResponse = await ai.chat(ASSESSOR_SYSTEM, messages, userConfig);
 
-  const isReady = nextResponse.includes("[READY]");
+  // Force [READY] after 3 user answers
+  const turnCount = answers.length + 1; // +1 for current answer
+  const forceReady = turnCount >= 3;
+
+  const systemPrompt = forceReady
+    ? ASSESSOR_SYSTEM + "\n\nThis is the final exchange. You MUST output [READY] at the start of your message followed by a 1-2 sentence summary. Do NOT ask another question."
+    : ASSESSOR_SYSTEM;
+
+  const userConfig = await getUserAIConfigByUserId(userId);
+  const nextResponse = await ai.chat(systemPrompt, messages, userConfig);
+
+  let isReady = nextResponse.includes("[READY]");
+  let cleanResponse: string;
+
+  if (forceReady && !isReady) {
+    isReady = true;
+    cleanResponse = nextResponse.trim();
+  } else if (isReady) {
+    cleanResponse = nextResponse.slice(nextResponse.indexOf("[READY]") + "[READY]".length).trim();
+  } else {
+    cleanResponse = nextResponse;
+  }
 
   // Store this Q&A pair (use a placeholder for the question since we don't have it cleanly)
   answers.push({ question: "(previous AI message)", answer });
@@ -63,9 +82,6 @@ export async function handleClarifyingAnswer(userId: string, answer: string): Pr
     onboardingStatus: newStatus,
   }).where(eq(users.id, userId));
 
-  const cleanResponse = isReady
-    ? nextResponse.slice(nextResponse.indexOf("[READY]") + "[READY]".length).trim()
-    : nextResponse;
   return { response: cleanResponse, isReady };
 }
 
