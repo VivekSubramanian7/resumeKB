@@ -344,6 +344,27 @@ function completeTask(taskId: string, reflection?: string): { newStreak: number 
   return { newStreak: 1 };
 }
 
+// ─── Callback Handler ─────────────────────────────────────────────────────────
+
+async function handleCallback(userId: string, data: string) {
+  if (data === "confirm_archetype") {
+    updateUser(userId, { onboardingStatus: "generating_tree" });
+    botSay("Generating your skill tree...");
+    const nodes = await generateTree(userId);
+    const rootNodes = nodes.filter((n) => !n.parentNodeId);
+    const buttons = rootNodes.map((node) => ({ label: `${node.title}`, data: `select_branch:${node.id}` }));
+    const treeText = rootNodes.map((r) => {
+      const children = nodes.filter((n) => n.parentNodeId === r.id);
+      const childList = children.map((c) => `  → ${c.title}`).join("\n");
+      return `🌟 ${r.title}\n${r.description}\n${childList}`;
+    }).join("\n\n");
+    botSay(`Here's your path:\n\n${treeText}\n\nChoose your first branch:`, buttons);
+  } else if (data === "change_archetype") {
+    updateUser(userId, { onboardingStatus: "awaiting_current_self" });
+    botSay("Tell me more about what feels off. What's missing from that description?");
+  }
+}
+
 // ─── Conversation Script ───────────────────────────────────────────────────────
 
 // State tracker for button handling
@@ -432,27 +453,18 @@ async function send(text: string) {
     botSay("Analyzing your gap...");
     const explanation = await handleCurrentSelf(user.id, text);
     const updatedUser = getUserById(user.id)!;
+    // Override status to confirming_archetype
+    updateUser(user.id, { onboardingStatus: "confirming_archetype" });
     const archetypeName = (updatedUser.archetype || "").replace(/-/g, " ").toUpperCase();
-    botSay(`Your archetype: ${archetypeName}\n\n${explanation}`);
-    botSay("Generating your skill tree...");
+    botSay(`Your archetype: ${archetypeName}\n\n${explanation}\n\nDoes this feel right?`, [
+      { label: "Yes, that's me", data: "confirm_archetype" },
+      { label: "Not quite", data: "change_archetype" },
+    ]);
+    return;
+  }
 
-    const nodes = await generateTree(user.id);
-    const rootNodes = nodes.filter((n) => !n.parentNodeId);
-
-    lastButtons = rootNodes.map((node) => ({
-      label: `${node.title}`,
-      data: `select_branch:${node.id}`,
-    }));
-
-    const treeText = rootNodes
-      .map((r) => {
-        const ch = nodes.filter((n) => n.parentNodeId === r.id);
-        const childList = ch.map((c) => `  → ${c.title}`).join("\n");
-        return `🌟 ${r.title}\n${r.description}\n${childList}`;
-      })
-      .join("\n\n");
-
-    botSay(`Here's your path:\n\n${treeText}\n\nChoose your first branch:`, lastButtons);
+  if (user.onboardingStatus === "confirming_archetype") {
+    botSay("Please use the buttons above to confirm or change your archetype.");
     return;
   }
 
@@ -539,6 +551,12 @@ async function runConversation() {
   const userAfterClarify = getUserById(store.users[0]?.id ?? "");
   if (userAfterClarify?.onboardingStatus === "awaiting_current_self") {
     await send(CURRENT_SELF_ANSWER);
+  }
+
+  // Step 4b: Auto-confirm archetype if we're in confirming_archetype state
+  const userAfterCurrentSelf = getUserById(store.users[0]?.id ?? "");
+  if (userAfterCurrentSelf?.onboardingStatus === "confirming_archetype") {
+    await handleCallback(store.users[0]!.id, "confirm_archetype");
   }
 
   // Step 5: Select first branch

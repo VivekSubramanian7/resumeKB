@@ -17,7 +17,7 @@ export const users = pgTable("users", {
   telegramUsername: text("telegram_username"),
   // Onboarding state
   onboardingStatus: text("onboarding_status").notNull().default("not_started"),
-  // not_started | awaiting_final_boss | clarifying | awaiting_current_self | assigning | generating_tree | selecting_branch | complete
+  // not_started | awaiting_final_boss | clarifying | awaiting_current_self | assigning | confirming_archetype | generating_tree | selecting_branch | complete
   finalBossDescription: text("final_boss_description"),
   currentSelfDescription: text("current_self_description"),
   clarifyingAnswers: jsonb("clarifying_answers").$type<{ question: string; answer: string }[]>().default([]),

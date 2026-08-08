@@ -540,28 +540,20 @@ async function handleOnboardingMessage(user: User, text: string) {
       botSay("Analyzing your gap...");
       const explanation = await handleCurrentSelf(user.id, text);
       const updatedUser = getUserById(user.id)!;
+      // Override status to confirming_archetype
+      updateUser(user.id, { onboardingStatus: "confirming_archetype" });
       const archetypeName = (updatedUser.archetype || "").replace(/-/g, " ").toUpperCase();
 
-      botSay(`Your archetype: ${archetypeName}\n\n${explanation}`);
-      botSay("Generating your skill tree...");
+      botSay(`Your archetype: ${archetypeName}\n\n${explanation}\n\nDoes this feel right?`, [
+        { label: "Yes, that's me", data: "confirm_archetype" },
+        { label: "Not quite", data: "change_archetype" },
+      ]);
+      break;
+    }
 
-      const nodes = await generateTree(user.id);
-      const rootNodes = nodes.filter((n) => !n.parentNodeId);
-
-      const buttons = rootNodes.map((node) => ({
-        label: `${node.title}`,
-        data: `select_branch:${node.id}`,
-      }));
-
-      const treeText = rootNodes
-        .map((r) => {
-          const children = nodes.filter((n) => n.parentNodeId === r.id);
-          const childList = children.map((c) => `  → ${c.title}`).join("\n");
-          return `🌟 ${r.title}\n${r.description}\n${childList}`;
-        })
-        .join("\n\n");
-
-      botSay(`Here's your path:\n\n${treeText}\n\nChoose your first branch:`, buttons);
+    case "confirming_archetype": {
+      // Should not receive text messages in this state -- user should click a button
+      botSay("Please use the buttons above to confirm or change your archetype.");
       break;
     }
 
@@ -608,6 +600,27 @@ async function handleDailyMessage(user: User, text: string) {
 }
 
 async function handleButtonPress(user: User, label: string) {
+  // Archetype confirmation buttons
+  if (label === "Yes, that's me") {
+    updateUser(user.id, { onboardingStatus: "generating_tree" });
+    botSay("Generating your skill tree...");
+    const nodes = await generateTree(user.id);
+    const rootNodes = nodes.filter((n) => !n.parentNodeId);
+    const buttons = rootNodes.map((node) => ({ label: `${node.title}`, data: `select_branch:${node.id}` }));
+    const treeText = rootNodes.map((r) => {
+      const children = nodes.filter((n) => n.parentNodeId === r.id);
+      const childList = children.map((c) => `  → ${c.title}`).join("\n");
+      return `🌟 ${r.title}\n${r.description}\n${childList}`;
+    }).join("\n\n");
+    botSay(`Here's your path:\n\n${treeText}\n\nChoose your first branch:`, buttons);
+    return;
+  }
+  if (label === "Not quite") {
+    updateUser(user.id, { onboardingStatus: "awaiting_current_self" });
+    botSay("Tell me more about what feels off. What's missing from that description?");
+    return;
+  }
+
   // Match button label to stored skill nodes or tasks
   if (user.onboardingStatus === "selecting_branch") {
     const nodes = store.skillNodes.filter((n) => n.userId === user.id && !n.parentNodeId);

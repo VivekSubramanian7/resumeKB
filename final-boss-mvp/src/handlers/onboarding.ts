@@ -2,13 +2,12 @@ import type { Context } from "grammy";
 import { InlineKeyboard } from "grammy";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { users, skillNodes } from "../db/schema.js";
+import { users } from "../db/schema.js";
 import {
   getOrCreateUser,
   handleFinalBossInput,
   handleClarifyingAnswer,
   handleCurrentSelf,
-  generateTree,
 } from "../services/onboarding.js";
 
 export async function handleOnboardingMessage(ctx: Context) {
@@ -46,35 +45,26 @@ export async function handleOnboardingMessage(ctx: Context) {
       await ctx.reply("Analyzing your gap...");
       const explanation = await handleCurrentSelf(user.id, text);
 
+      // Override status to confirming_archetype (handleCurrentSelf sets generating_tree)
+      await db.update(users).set({ onboardingStatus: "confirming_archetype" }).where(eq(users.id, user.id));
+
       // Show archetype
       const [updatedUser] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
       const archetypeName = (updatedUser!.archetype || "").replace(/-/g, " ").toUpperCase();
 
-      await ctx.reply(`Your archetype: *${archetypeName}*\n\n${explanation}`, { parse_mode: "Markdown" });
-      await ctx.reply("Generating your skill tree...");
+      const confirmKeyboard = new InlineKeyboard()
+        .text("Yes, that's me", "confirm_archetype")
+        .text("Not quite", "change_archetype");
 
-      // Generate tree
-      const nodes = await generateTree(user.id);
-      const rootNodes = nodes.filter((n) => !n.parentNodeId);
+      await ctx.reply(
+        `Your archetype: *${archetypeName}*\n\n${explanation}\n\nDoes this feel right?`,
+        { parse_mode: "Markdown", reply_markup: confirmKeyboard }
+      );
+      break;
+    }
 
-      // Show branches as inline keyboard
-      const keyboard = new InlineKeyboard();
-      for (const node of rootNodes) {
-        keyboard.text(`${node.title}`, `select_branch:${node.id}`).row();
-      }
-
-      const treeText = rootNodes
-        .map((r) => {
-          const children = nodes.filter((n) => n.parentNodeId === r.id);
-          const childList = children.map((c) => `  → ${c.title}`).join("\n");
-          return `🌟 *${r.title}*\n${r.description}\n${childList}`;
-        })
-        .join("\n\n");
-
-      await ctx.reply(`Here's your path:\n\n${treeText}\n\n*Choose your first branch:*`, {
-        parse_mode: "Markdown",
-        reply_markup: keyboard,
-      });
+    case "confirming_archetype": {
+      await ctx.reply("Please use the buttons above to confirm or change your archetype.");
       break;
     }
 

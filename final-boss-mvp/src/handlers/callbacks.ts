@@ -1,5 +1,9 @@
 import type { Context } from "grammy";
-import { getOrCreateUser, selectBranch } from "../services/onboarding.js";
+import { InlineKeyboard } from "grammy";
+import { eq } from "drizzle-orm";
+import { db } from "../db/client.js";
+import { users } from "../db/schema.js";
+import { getOrCreateUser, selectBranch, generateTree } from "../services/onboarding.js";
 import { completeTask } from "../services/tasks.js";
 
 export async function handleCallback(ctx: Context) {
@@ -43,5 +47,33 @@ export async function handleCallback(ctx: Context) {
     } catch {
       await ctx.answerCallbackQuery({ text: "Something went wrong" });
     }
+  } else if (data === "confirm_archetype") {
+    await db.update(users).set({ onboardingStatus: "generating_tree" }).where(eq(users.id, user.id));
+    await ctx.answerCallbackQuery({ text: "Let's build your path" });
+    await ctx.reply("Generating your skill tree...");
+    const nodes = await generateTree(user.id);
+    const rootNodes = nodes.filter((n) => !n.parentNodeId);
+
+    const keyboard = new InlineKeyboard();
+    for (const node of rootNodes) {
+      keyboard.text(`${node.title}`, `select_branch:${node.id}`).row();
+    }
+
+    const treeText = rootNodes
+      .map((r) => {
+        const children = nodes.filter((n) => n.parentNodeId === r.id);
+        const childList = children.map((c) => `  → ${c.title}`).join("\n");
+        return `🌟 *${r.title}*\n${r.description}\n${childList}`;
+      })
+      .join("\n\n");
+
+    await ctx.reply(`Here's your path:\n\n${treeText}\n\n*Choose your first branch:*`, {
+      parse_mode: "Markdown",
+      reply_markup: keyboard,
+    });
+  } else if (data === "change_archetype") {
+    await db.update(users).set({ onboardingStatus: "awaiting_current_self" }).where(eq(users.id, user.id));
+    await ctx.answerCallbackQuery();
+    await ctx.reply("Tell me more about what feels off. What's missing from that description?");
   }
 }
