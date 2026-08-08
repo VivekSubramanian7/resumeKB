@@ -1,8 +1,9 @@
 /**
- * Scripted conversation driver for Final Boss simulator.
- * Run: npx tsx src/simulate-scripted.ts
+ * LLM-as-user conversation driver for Final Boss simulator.
+ * Run: npx tsx src/simulate-llm.ts
  *
- * Drives a full onboarding conversation, logs to both terminal and conversation-log.txt
+ * Uses the same configured model to play both the bot AND the simulated user.
+ * Logs to both terminal and conversation-log-llm.txt
  */
 import "dotenv/config";
 import * as fs from "fs";
@@ -14,7 +15,27 @@ import { TREE_SYSTEM } from "./prompts/architect.js";
 import { taskGenerationSystem } from "./prompts/coach.js";
 import { config } from "./config.js";
 
-// ─── In-Memory Store (same as simulate.ts) ─────────────────────────────────────
+// ─── User Persona ─────────────────────────────────────────────────────────────
+
+const USER_PERSONA = `You are simulating a real person talking to a personal transformation bot on Telegram.
+
+Your persona:
+- Alex, 28, software engineer, 3 years experience, works remotely
+- You want to become disciplined: ship code daily, wake up at 5am, work out, mentor others
+- You struggle with: procrastination on hard tasks, starting strong then losing momentum after 2-3 weeks, wasting mornings, chasing new ideas instead of finishing
+- You exercise maybe once a week, wake up around 8:30am
+- You're somewhat skeptical but genuinely want change
+- You know what to do but can't bridge the gap to doing it
+
+RULES:
+- Respond naturally to whatever the bot asks. Answer the ACTUAL question being asked.
+- Keep responses 1-3 sentences. This is Telegram, not email.
+- Be honest and specific about your struggles.
+- Don't be overly enthusiastic or robotic. Casual tone.
+- Never break character or mention you're an AI.
+- Output ONLY your response as Alex. No thinking, no labels, no quotes around it.`;
+
+// ─── In-Memory Store ──────────────────────────────────────────────────────────
 
 interface User {
   id: string;
@@ -65,11 +86,11 @@ const store = {
 };
 
 const TELEGRAM_ID = 999999;
-const TELEGRAM_USERNAME = "sim_user";
+const TELEGRAM_USERNAME = "sim_alex";
 
-// ─── Logging ───────────────────────────────────────────────────────────────────
+// ─── Logging ──────────────────────────────────────────────────────────────────
 
-const logFile = path.join(process.cwd(), "conversation-log.txt");
+const logFile = path.join(process.cwd(), "conversation-log-llm.txt");
 const logStream = fs.createWriteStream(logFile, { flags: "w" });
 
 function log(text: string) {
@@ -91,7 +112,28 @@ function botSay(text: string, buttons?: { label: string; data: string }[]) {
   }
 }
 
-// ─── Service Reimplementations ─────────────────────────────────────────────────
+// ─── Simulated User LLM ──────────────────────────────────────────────────────
+
+let conversationHistory: { role: "bot" | "user"; text: string }[] = [];
+
+async function generateUserResponse(botMessage: string, context?: string): Promise<string> {
+  conversationHistory.push({ role: "bot", text: botMessage });
+
+  const recentHistory = conversationHistory.slice(-10)
+    .map(m => `${m.role === "bot" ? "Bot" : "You"}: ${m.text}`)
+    .join("\n");
+
+  const prompt = context
+    ? `${context}\n\nRecent conversation:\n${recentHistory}\n\nBot's latest message: "${botMessage}"\n\nYour response as Alex:`
+    : `Recent conversation:\n${recentHistory}\n\nBot's latest message: "${botMessage}"\n\nRespond naturally as Alex:`;
+
+  const response = await ai.chat(USER_PERSONA, [{ role: "user", content: prompt }]);
+  const cleaned = response.replace(/^["']|["']$/g, "").trim();
+  conversationHistory.push({ role: "user", text: cleaned });
+  return cleaned;
+}
+
+// ─── Service Reimplementations ────────────────────────────────────────────────
 
 function getOrCreateUser(telegramId: number, username?: string): User {
   let user = store.users.find((u) => u.telegramId === telegramId);
@@ -150,28 +192,9 @@ async function handleClarifyingAnswer(userId: string, answer: string): Promise<{
   }
   messages.push({ role: "user", content: answer });
 
-  // Force [READY] after 3 user answers
-  const turnCount = answers.length + 1; // +1 for current answer
-  const forceReady = turnCount >= 3;
-
-  const systemPrompt = forceReady
-    ? ASSESSOR_SYSTEM + "\n\nThis is the final exchange. You MUST output [READY] at the start of your message followed by a 1-2 sentence summary. Do NOT ask another question."
-    : ASSESSOR_SYSTEM;
-
   const userConfig = getUserAIConfig(userId);
-  const nextResponse = await ai.chat(systemPrompt, messages, userConfig);
-
-  let isReady = nextResponse.includes("[READY]");
-  let cleanResponse: string;
-
-  if (forceReady && !isReady) {
-    isReady = true;
-    cleanResponse = nextResponse.trim();
-  } else if (isReady) {
-    cleanResponse = nextResponse.slice(nextResponse.indexOf("[READY]") + "[READY]".length).trim();
-  } else {
-    cleanResponse = nextResponse;
-  }
+  const nextResponse = await ai.chat(ASSESSOR_SYSTEM, messages, userConfig);
+  const isReady = nextResponse.includes("[READY]");
 
   answers.push({ question: "(previous AI message)", answer });
   updateUser(userId, {
@@ -179,6 +202,9 @@ async function handleClarifyingAnswer(userId: string, answer: string): Promise<{
     onboardingStatus: isReady ? "awaiting_current_self" : "clarifying",
   });
 
+  const cleanResponse = isReady
+    ? nextResponse.slice(nextResponse.indexOf("[READY]") + "[READY]".length).trim()
+    : nextResponse;
   return { response: cleanResponse, isReady };
 }
 
@@ -209,40 +235,12 @@ async function generateTree(userId: string): Promise<SkillNode[]> {
   const treeInput = `Archetype: ${user.archetype}\nGoal: ${user.finalBossDescription}\nCurrent: ${user.currentSelfDescription}\nDimensions identified during assessment.`;
 
   const userConfig = getUserAIConfig(userId);
-  let result = await ai.chatJSON<{
+  const result = await ai.chatJSON<{
     nodes: { title: string; description: string; estimatedDays: number; parentTitle: string | null; orderIndex: number }[];
   }>(TREE_SYSTEM, [{ role: "user", content: treeInput }], userConfig);
 
-  // Validate: exactly 3 root nodes
-  let roots = result.nodes.filter((n) => !n.parentTitle);
-  if (roots.length > 3) {
-    roots = roots.slice(0, 3);
-    result.nodes = [
-      ...roots,
-      ...result.nodes.filter((n) => n.parentTitle && roots.some(r => r.title === n.parentTitle)),
-    ];
-  }
-  if (roots.length < 3) {
-    // Re-prompt once
-    const retryResult = await ai.chatJSON<typeof result>(
-      TREE_SYSTEM + "\n\nYou MUST return EXACTLY 3 top-level branches (parentTitle: null). You returned " + roots.length + " last time.",
-      [{ role: "user", content: treeInput }],
-      userConfig,
-    );
-    result = retryResult;
-  }
-
-  // Validate: each root has 2-3 children
-  for (const root of roots) {
-    const children = result.nodes.filter(n => n.parentTitle === root.title);
-    if (children.length > 3) {
-      // Keep only first 3
-      const toRemove = children.slice(3);
-      result.nodes = result.nodes.filter(n => !toRemove.includes(n));
-    }
-  }
-
   const nodeMap = new Map<string, string>();
+  const roots = result.nodes.filter((n) => !n.parentTitle);
 
   for (const node of roots) {
     const id = randomUUID();
@@ -344,16 +342,15 @@ function completeTask(taskId: string, reflection?: string): { newStreak: number 
   return { newStreak: 1 };
 }
 
-// ─── Conversation Script ───────────────────────────────────────────────────────
+// ─── Message Handling ─────────────────────────────────────────────────────────
 
-// State tracker for button handling
+let lastBotMessage = "";
 let lastButtons: { label: string; data: string }[] = [];
 
 async function send(text: string) {
   userSay(text);
   const user = getOrCreateUser(TELEGRAM_ID, TELEGRAM_USERNAME);
 
-  // Button press
   if (text.startsWith("[btn]")) {
     const label = text.replace("[btn]", "").trim();
     if (user.onboardingStatus === "selecting_branch") {
@@ -361,7 +358,9 @@ async function send(text: string) {
       const match = nodes.find((n) => label.startsWith(n.title));
       if (match) {
         selectBranch(user.id, match.id);
-        botSay("Your journey begins now.\n\nEvery morning you'll get a task. Complete it, then tell me 'done'.\n\nEvery evening I'll check in with you.\n\nYou have 7 days. Complete 5 tasks to stay in the program.\n\nFirst task arrives tomorrow morning. Get some rest.");
+        const msg = "Your journey begins now.\n\nEvery morning you'll get a task. Complete it, then tell me 'done'.\n\nEvery evening I'll check in with you.\n\nYou have 7 days. Complete 5 tasks to stay in the program.\n\nFirst task arrives tomorrow morning. Get some rest.";
+        botSay(msg);
+        lastBotMessage = msg;
         return;
       }
     }
@@ -369,16 +368,14 @@ async function send(text: string) {
     return;
   }
 
-  // /start
   if (text === "/start") {
     user.onboardingStatus = "awaiting_final_boss";
-    botSay(
-      "Welcome to Final Boss.\n\nThis is a personal transformation program. Not an app you open when you feel like it, a commitment.\n\nYou have 7 days to prove you're serious. Complete 5 of 7 daily tasks, or you're out.\n\nReady? Let's begin.\n\nWho is the final boss version of you?\n\nDescribe who you want to become. Be specific, be ambitious. The person you'd be if you had no excuses."
-    );
+    const msg = "Welcome to Final Boss.\n\nThis is a personal transformation program. Not an app you open when you feel like it, a commitment.\n\nYou have 7 days to prove you're serious. Complete 5 of 7 daily tasks, or you're out.\n\nReady? Let's begin.\n\nWho is the final boss version of you?\n\nDescribe who you want to become. Be specific, be ambitious. The person you'd be if you had no excuses.";
+    botSay(msg);
+    lastBotMessage = msg;
     return;
   }
 
-  // /status
   if (text === "/status") {
     if (user.onboardingStatus !== "complete") {
       botSay(`Onboarding status: ${user.onboardingStatus}`);
@@ -386,28 +383,33 @@ async function send(text: string) {
       const dayNum = user.trialStartDate
         ? Math.floor((Date.now() - new Date(user.trialStartDate).getTime()) / (24 * 60 * 60 * 1000)) + 1
         : 0;
-      botSay(`📊 Status\n\nArchetype: ${(user.archetype || "").replace(/-/g, " ")}\nTrial: ${user.trialStatus} (day ${dayNum})\nStreak: ${user.currentStreak} 🔥\nTime to Final Boss: ${user.timeToFinalBoss || "?"} days`);
+      const msg = `📊 Status\n\nArchetype: ${(user.archetype || "").replace(/-/g, " ")}\nTrial: ${user.trialStatus} (day ${dayNum})\nStreak: ${user.currentStreak} 🔥\nTime to Final Boss: ${user.timeToFinalBoss || "?"} days`;
+      botSay(msg);
+      lastBotMessage = msg;
     }
     return;
   }
 
-  // /generate_task
   if (text === "/generate_task") {
     if (user.onboardingStatus !== "complete") { botSay("Finish onboarding first."); return; }
     botSay("Generating today's task...");
     const task = await generateDailyTask(user.id);
-    botSay(`☀️ Your task:\n\n${task.taskText}\n\nType: ${task.taskType}\n\nReply "done" when complete.`, [
+    const msg = `☀️ Your task:\n\n${task.taskText}\n\nType: ${task.taskType}\n\nReply "done" when complete.`;
+    const buttons = [
       { label: "✅ Done", data: `complete_task:${task.id}` },
       { label: "⏭ Skip", data: `skip_task:${task.id}` },
-    ]);
+    ];
+    botSay(msg, buttons);
+    lastBotMessage = msg;
+    lastButtons = buttons;
     return;
   }
 
   // Onboarding
   if (user.onboardingStatus === "awaiting_final_boss") {
-    botSay("Let me think about that...");
     const response = await handleFinalBossInput(user.id, text);
     botSay(response);
+    lastBotMessage = response;
     return;
   }
 
@@ -415,9 +417,12 @@ async function send(text: string) {
     const { response, isReady } = await handleClarifyingAnswer(user.id, text);
     if (isReady) {
       botSay(response);
-      botSay("Now, who are you today?\n\nBe honest. Where do you actually stand right now? What's your reality?");
+      const followup = "Now, who are you today?\n\nBe honest. Where do you actually stand right now? What's your reality?";
+      botSay(followup);
+      lastBotMessage = followup;
     } else {
       botSay(response);
+      lastBotMessage = response;
     }
     return;
   }
@@ -446,11 +451,13 @@ async function send(text: string) {
       })
       .join("\n\n");
 
-    botSay(`Here's your path:\n\n${treeText}\n\nChoose your first branch:`, lastButtons);
+    const msg = `Here's your path:\n\n${treeText}\n\nChoose your first branch:`;
+    botSay(msg, lastButtons);
+    lastBotMessage = msg;
     return;
   }
 
-  // Daily task flow (post-onboarding)
+  // Post-onboarding
   if (user.onboardingStatus === "complete") {
     const task = store.dailyTasks.find((t) => t.userId === user.id && t.assignedDate === new Date().toISOString().split("T")[0]);
     const lower = text.toLowerCase().trim();
@@ -464,7 +471,9 @@ async function send(text: string) {
       return;
     }
     if (lower === "done" || lower === "completed") {
-      botSay("Nice. Any quick reflection? What did you notice? (or send 'skip' to skip)");
+      const msg = "Nice. Any quick reflection? What did you notice? (or send 'skip' to skip)";
+      botSay(msg);
+      lastBotMessage = msg;
       return;
     }
     if (lower === "skip") {
@@ -482,57 +491,52 @@ async function send(text: string) {
   botSay("Send /start to begin.");
 }
 
-// ─── Define the conversation script ────────────────────────────────────────────
-
-// Clarifying answers — the script sends these until the AI says [READY]
-const CLARIFYING_ANSWERS: string[] = [
-  "Shipping means pushing at least one meaningful commit or publishing one piece of content every day. Not just busy work.",
-  "Honestly, I start strong for 2-3 weeks then fall off. I get distracted by new ideas and lose momentum on what matters.",
-  "I'm a software engineer, 3 years experience. I can build things but I procrastinate on the hard stuff. I exercise maybe once a week. I wake up around 8:30am most days.",
-  "My biggest struggle is the gap between knowing what to do and actually doing it. I have all the time in the world but I fill it with low-value stuff.",
-  "When I'm in flow I'm unstoppable. The problem is getting into flow — I let small friction stop me.",
-  "Discipline for me right now is nonexistent. I set alarms and snooze them. I make plans and break them by noon. I need external structure.",
-  "Creatively I'm strong — I have too many ideas if anything. The problem is finishing, not starting.",
-  "Relationships are good but surface level. I want to go deeper, actually mentor people, be the person others come to for real advice.",
-  "Success for me would be: wake up, no snooze, gym, ship something meaningful, help one person, sleep satisfied. Every single day.",
-  "I've tried apps, accountability partners, habit trackers. They all work for 2 weeks then I ghost them.",
-];
-
-const CURRENT_SELF_ANSWER = "I'm a decent engineer who's coasting. I have the skills but not the discipline. I work remotely, have flexible hours but waste the morning. I know I could be 10x more impactful if I just showed up consistently.";
-
-const FINAL_BOSS_VISION = "I want to become someone who ships code every single day, builds in public, and has the discipline to wake up at 5am, work out, and still have energy to mentor others. A relentless builder who's also deeply empathetic.";
+// ─── Conversation Driver ──────────────────────────────────────────────────────
 
 async function runConversation() {
   log("═══════════════════════════════════════════════════════════");
-  log("  FINAL BOSS — Scripted Conversation Log");
+  log("  FINAL BOSS — LLM-as-User Conversation");
   log(`  Date: ${new Date().toISOString()}`);
   log(`  AI Provider: ${config.aiProvider} | Model: ${config.aiModel}`);
   log(`  Base URL: ${config.aiBaseUrl}`);
+  log(`  Mode: LLM generates user responses (not scripted)`);
   log("═══════════════════════════════════════════════════════════\n");
 
   // Step 1: /start
   await send("/start");
 
-  // Step 2: Final boss vision
-  await send(FINAL_BOSS_VISION);
+  // Step 2: LLM generates the final boss vision
+  const vision = await generateUserResponse(
+    lastBotMessage,
+    "The bot is asking you to describe your ideal future self. Give a specific, ambitious 2-3 sentence vision about who you want to become."
+  );
+  await send(vision);
 
-  // Step 3: Answer clarifying questions until AI says [READY]
-  let clarifyIdx = 0;
+  // Step 3: Clarifying loop — bot asks, LLM-user answers naturally
+  let clarifyTurns = 0;
+  const MAX_CLARIFY_TURNS = 10; // safety valve
   while (true) {
     const user = getUserById(store.users[0]?.id ?? "");
     if (!user || user.onboardingStatus !== "clarifying") break;
-    if (clarifyIdx >= CLARIFYING_ANSWERS.length) {
-      log("\n⚠️  Ran out of scripted clarifying answers. AI hasn't said [READY] yet.");
+    if (clarifyTurns >= MAX_CLARIFY_TURNS) {
+      log("\n⚠️  Hit max clarifying turns without [READY]. Breaking.");
       break;
     }
-    await send(CLARIFYING_ANSWERS[clarifyIdx]!);
-    clarifyIdx++;
+    const userResponse = await generateUserResponse(lastBotMessage);
+    await send(userResponse);
+    clarifyTurns++;
   }
+
+  log(`\n📍 Clarifying phase ended after ${clarifyTurns} turns.`);
 
   // Step 4: "Who are you today?"
   const userAfterClarify = getUserById(store.users[0]?.id ?? "");
   if (userAfterClarify?.onboardingStatus === "awaiting_current_self") {
-    await send(CURRENT_SELF_ANSWER);
+    const currentSelf = await generateUserResponse(
+      lastBotMessage,
+      "The bot is asking you to honestly describe who you are RIGHT NOW. Be real about your current habits, weaknesses, and daily reality."
+    );
+    await send(currentSelf);
   }
 
   // Step 5: Select first branch
@@ -541,21 +545,41 @@ async function runConversation() {
     const rootNodes = store.skillNodes.filter((n) => n.userId === userAfterTree.id && !n.parentNodeId);
     if (rootNodes[0]) {
       const btnLabel = `${rootNodes[0].title} (${rootNodes[0].estimatedDays}d)`;
+      log(`\n📍 Auto-selecting first branch: "${rootNodes[0].title}"`);
       await send(`[btn] ${btnLabel}`);
     }
   }
 
-  // Step 6: Generate and complete a task
+  // Step 6: Generate task, complete it with LLM-generated reflection
   const userFinal = getUserById(store.users[0]?.id ?? "");
   if (userFinal?.onboardingStatus === "complete") {
     await send("/generate_task");
     await send("done");
-    await send("I noticed I was avoiding the hardest part of the task but once I started it took only 10 minutes.");
+
+    const reflection = await generateUserResponse(
+      lastBotMessage,
+      "The bot is asking for a quick reflection after completing your task. What did you notice? Keep it to 1-2 sentences."
+    );
+    await send(reflection);
+
     await send("/status");
   }
 
+  // ─── Summary ────────────────────────────────────────────────────────────────
   log("\n═══════════════════════════════════════════════════════════");
-  log("  END OF CONVERSATION");
+  log("  CONVERSATION SUMMARY");
+  log("═══════════════════════════════════════════════════════════");
+  log(`  Total exchanges: ${conversationHistory.length}`);
+  log(`  Clarifying turns: ${clarifyTurns}`);
+  const user = getUserById(store.users[0]?.id ?? "");
+  if (user) {
+    log(`  Final status: ${user.onboardingStatus}`);
+    log(`  Archetype: ${user.archetype ?? "none"}`);
+    log(`  Streak: ${user.currentStreak}`);
+    const rootNodes = store.skillNodes.filter(n => n.userId === user.id && !n.parentNodeId);
+    log(`  Skill tree roots: ${rootNodes.length} (expected 3)`);
+    log(`  Total nodes: ${store.skillNodes.filter(n => n.userId === user.id).length}`);
+  }
   log("═══════════════════════════════════════════════════════════");
 
   logStream.end();

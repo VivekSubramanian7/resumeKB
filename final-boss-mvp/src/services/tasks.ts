@@ -39,12 +39,20 @@ export async function generateDailyTask(userId: string) {
     ? Math.floor((Date.now() - new Date(user.trialStartDate).getTime()) / (24 * 60 * 60 * 1000)) + 1
     : 1;
 
+  const keyStruggles = (user.clarifyingAnswers || [])
+    .map(qa => qa.answer)
+    .join("; ")
+    .slice(0, 500); // cap length
+
   const system = taskGenerationSystem({
     archetype: user.archetype ?? "disciplined-achiever",
     nodeTitle: activeNode.title,
     nodeDescription: activeNode.description,
     dayNumber,
     recentTasks: recentTasks.map((t) => `[${t.status}] ${t.taskText}`),
+    finalBossDescription: user.finalBossDescription ?? "",
+    currentSelfDescription: user.currentSelfDescription ?? "",
+    keyStruggles,
   });
 
   const userConfig = await getUserAIConfigByUserId(userId);
