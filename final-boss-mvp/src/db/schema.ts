@@ -80,3 +80,11 @@ export const checkIns = pgTable("check_ins", {
   }>(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const journalEntries = pgTable("journal_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  signals: jsonb("signals").$type<{ emotions: string[]; themes: string[]; obstacles: string[] }>(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

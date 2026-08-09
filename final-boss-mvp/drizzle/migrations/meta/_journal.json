@@ -15,6 +15,13 @@
       "when": 1754352000000,
       "tag": "0001_user_llm_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786292574421,
+      "tag": "0002_amusing_azazel",
+      "breakpoints": true
     }
   ]
 }
