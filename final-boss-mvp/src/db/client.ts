@@ -3,5 +3,5 @@ import postgres from "postgres";
 import { config } from "../config.js";
 import * as schema from "./schema.js";
 
-const connection = postgres(config.databaseUrl);
+const connection = postgres(config.databaseUrl, { connect_timeout: 10 });
 export const db = drizzle(connection, { schema });

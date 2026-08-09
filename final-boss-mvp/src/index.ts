@@ -12,9 +12,20 @@ async function main() {
   await server.listen({ port: config.port, host: "0.0.0.0" });
   console.log(`Health check on port ${config.port}`);
 
+  // Retry migrations — Postgres may still be booting on cold deploy
   console.log("Running migrations...");
-  await migrate(db, { migrationsFolder: "./drizzle/migrations" });
-  console.log("Migrations done.");
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      await migrate(db, { migrationsFolder: "./drizzle/migrations" });
+      console.log("Migrations done.");
+      break;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error(`Migration attempt ${attempt}/5 failed: ${msg}`);
+      if (attempt === 5) throw err;
+      await new Promise((r) => setTimeout(r, 3000 * attempt));
+    }
+  }
 
   const bot = createBot();
   bot.catch((err) => console.error("Bot error:", err));
