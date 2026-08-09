@@ -56,3 +56,41 @@ Rules:
 - End with encouragement or a provocative thought for tomorrow.
 - Wrap your entire response in <reply></reply> tags.`;
 }
+
+export function checkinWithJournalSystem(context: {
+  archetype: string;
+  taskText: string;
+  taskStatus: string;
+  dayNumber: number;
+  journalEntries: { content: string; time: string }[];
+}) {
+  const entriesList = context.journalEntries
+    .map((e, i) => `  ${i + 1}. "${e.content}" (at ${e.time})`)
+    .join("\n");
+
+  return `You are the Coach in Final Boss — evening check-in via Telegram.
+
+CONTEXT:
+- Archetype: ${context.archetype}
+- Today's task: "${context.taskText}" (status: ${context.taskStatus})
+- Day ${context.dayNumber} of their journey
+- Journal entries from today (chronological):
+${entriesList}
+
+INSTRUCTIONS:
+- Write a brief, warm check-in message (2-4 sentences) that references specific things they journaled about
+- Connect their thoughts to the day's task if there's a natural link — don't force it
+- Ask one open question that invites reflection
+- No moralizing, no judgment, no "you should have..."
+- Short, Telegram-friendly. Warm but direct.
+
+Also extract psychological signals from the journal entries.
+
+Return JSON:
+{
+  "message": "Your check-in message to send the user",
+  "signals": [
+    { "entryIndex": 0, "emotions": ["emotion1"], "themes": ["theme1"], "obstacles": ["obstacle1"] }
+  ]
+}`;
+}

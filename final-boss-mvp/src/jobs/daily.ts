@@ -1,9 +1,12 @@
 import cron from "node-cron";
-import { eq } from "drizzle-orm";
+import { eq, and, gte } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { users } from "../db/schema.js";
+import { users, dailyTasks, journalEntries } from "../db/schema.js";
 import { generateDailyTask, markMissed } from "../services/tasks.js";
 import { evaluateTrial, getTrialDayNumber } from "../services/trial.js";
+import { chatJSON } from "../services/ai.js";
+import { getUserAIConfigByUserId } from "../services/llmSettings.js";
+import { checkinWithJournalSystem } from "../prompts/coach.js";
 import type { Bot } from "grammy";
 
 export function startJobs(bot: Bot) {
@@ -36,21 +39,80 @@ export function startJobs(bot: Bot) {
     }
   });
 
-  // Evening: 20:00 UTC  - check-in prompt
+  // Evening: 20:00 UTC  - check-in prompt (personalized if journal entries exist)
   cron.schedule("0 20 * * *", async () => {
     console.log("[CRON] Evening check-in prompt");
 
     const activeUsers = await db.select().from(users).where(eq(users.trialStatus, "active"));
     const passedUsers = await db.select().from(users).where(eq(users.trialStatus, "passed"));
 
+    const today = new Date().toISOString().split("T")[0] as string;
+
     for (const user of [...activeUsers, ...passedUsers]) {
       try {
-        await bot.api.sendMessage(
-          user.telegramId,
-          "🌙 Evening check-in time.\n\nHow did today go? Tell me about your task  - did you do it? What did you notice?",
+        // Query today's journal entries
+        const entries = await db.select().from(journalEntries)
+          .where(and(eq(journalEntries.userId, user.id), gte(journalEntries.createdAt, new Date(today + "T00:00:00Z"))))
+          .orderBy(journalEntries.createdAt);
+
+        if (entries.length === 0) {
+          // No journal entries — send generic message
+          await bot.api.sendMessage(
+            user.telegramId,
+            "🌙 Evening check-in time.\n\nHow did today go? Tell me about your task — did you do it? What did you notice?",
+          );
+          continue;
+        }
+
+        // Get today's task for context
+        const [todayTask] = await db.select().from(dailyTasks)
+          .where(and(eq(dailyTasks.userId, user.id), eq(dailyTasks.assignedDate, today)))
+          .limit(1);
+
+        const dayNum = user.trialStartDate ? getTrialDayNumber(user.trialStartDate) : 1;
+
+        const journalContext = entries.map(e => ({
+          content: e.content,
+          time: e.createdAt.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "UTC" }),
+        }));
+
+        const userConfig = await getUserAIConfigByUserId(user.id);
+        const result = await chatJSON<{
+          message: string;
+          signals: { entryIndex: number; emotions: string[]; themes: string[]; obstacles: string[] }[];
+        }>(
+          checkinWithJournalSystem({
+            archetype: user.archetype || "disciplined-achiever",
+            taskText: todayTask?.taskText || "No task today",
+            taskStatus: todayTask?.status || "none",
+            dayNumber: dayNum,
+            journalEntries: journalContext,
+          }),
+          [{ role: "user", content: "Generate the evening check-in." }],
+          userConfig,
         );
+
+        // Send personalized check-in
+        await bot.api.sendMessage(user.telegramId, `🌙 ${result.message}`);
+
+        // Write signals back to journal entries
+        for (const sig of result.signals) {
+          const entry = entries[sig.entryIndex];
+          if (entry) {
+            await db.update(journalEntries)
+              .set({ signals: { emotions: sig.emotions, themes: sig.themes, obstacles: sig.obstacles } })
+              .where(eq(journalEntries.id, entry.id));
+          }
+        }
       } catch (err) {
         console.error(`[CRON] Check-in failed for ${user.telegramId}:`, err);
+        // Fallback to generic on AI failure
+        try {
+          await bot.api.sendMessage(
+            user.telegramId,
+            "🌙 Evening check-in time.\n\nHow did today go? Tell me about your task — did you do it? What did you notice?",
+          );
+        } catch {}
       }
     }
   });
