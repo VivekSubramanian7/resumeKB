@@ -151,6 +151,66 @@ export function createBot() {
     await ctx.reply(msg);
   });
 
+  bot.command("history", async (ctx) => {
+    if (!ctx.from) return;
+    const user = await getOrCreateUser(ctx.from.id);
+
+    if (user.onboardingStatus !== "complete") {
+      await ctx.reply("No history yet. Complete onboarding first with /start.");
+      return;
+    }
+
+    // Parse optional day count from command args (e.g. /history 30)
+    const args = ctx.message?.text?.split(" ")[1];
+    const days = Math.min(Math.max(parseInt(args || "14", 10) || 14, 1), 90);
+
+    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().split("T")[0] as string;
+    const tasks = await db.select().from(dailyTasks)
+      .where(and(eq(dailyTasks.userId, user.id), gte(dailyTasks.assignedDate, since)))
+      .orderBy(desc(dailyTasks.assignedDate));
+
+    if (tasks.length === 0) {
+      await ctx.reply("📜 No tasks in this period.");
+      return;
+    }
+
+    const statusIcon = (s: string) => ({ completed: "✅", missed: "❌", skipped: "⏭", assigned: "⏳" }[s] || "⬜");
+    const truncate = (s: string, n: number) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+
+    const lines: string[] = [`📜 Task History (last ${days} days)\n`];
+    for (const t of tasks) {
+      const d = new Date(t.assignedDate + "T00:00:00Z");
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+      lines.push(`${label} · ${statusIcon(t.status)} ${t.status}`);
+      lines.push(`  "${truncate(t.taskText, 100)}"`);
+      if (t.reflection) {
+        lines.push(`  💬 "${truncate(t.reflection, 100)}"`);
+      }
+      lines.push("");
+    }
+
+    // Telegram 4096 char limit — split into multiple messages if needed
+    let msg = lines.join("\n");
+    if (msg.length <= 4096) {
+      await ctx.reply(msg);
+    } else {
+      // Send in chunks at paragraph boundaries
+      const chunks: string[] = [];
+      let chunk = "";
+      for (const line of lines) {
+        if ((chunk + line + "\n").length > 4000 && chunk.length > 0) {
+          chunks.push(chunk.trimEnd());
+          chunk = "";
+        }
+        chunk += line + "\n";
+      }
+      if (chunk.trim()) chunks.push(chunk.trimEnd());
+      for (const c of chunks) {
+        await ctx.reply(c);
+      }
+    }
+  });
+
   // Callbacks (inline keyboard buttons)
   bot.on("callback_query:data", handleCallback);
 
