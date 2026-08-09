@@ -3,3 +3,14 @@ dist/
 .env
 .env.local
 *.tsbuildinfo
+
+# Docs chat exports and plans
+docs/
+
+# Simulator output
+conversation-log-*.txt
+*.png
+
+# graphify output
+graphify-out/
+.claude/
