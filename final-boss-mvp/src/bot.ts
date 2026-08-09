@@ -1,5 +1,5 @@
 import { Bot } from "grammy";
-import { eq } from "drizzle-orm";
+import { eq, desc, gte, and } from "drizzle-orm";
 import { config } from "./config.js";
 import { NoAIConfigError } from "./services/ai.js";
 import { handleStart } from "./handlers/start.js";
@@ -9,6 +9,7 @@ import { handleCallback } from "./handlers/callbacks.js";
 import { getOrCreateUser } from "./services/onboarding.js";
 import { handleSettingsCommand, handleSettingsReset, handleSettingsClear, handleSettingsMessage } from "./handlers/settings.js";
 import { db } from "./db/client.js";
+import { getTrialDayNumber } from "./services/trial.js";
 import { skillNodes, dailyTasks, users } from "./db/schema.js";
 
 // ponytail: in-memory per-process; fine for single-instance MVP
@@ -66,25 +67,87 @@ export function createBot() {
       return;
     }
 
-    const dayNum = user.trialStartDate
-      ? Math.floor((Date.now() - new Date(user.trialStartDate).getTime()) / (24 * 60 * 60 * 1000)) + 1
-      : 0;
-
+    // Skill tree context
     const allNodes = await db.select().from(skillNodes).where(eq(skillNodes.userId, user.id));
     const rootNodes = allNodes.filter(n => !n.parentNodeId);
-    const completedBranches = rootNodes.filter(n => n.status === "completed").length;
     const activeBranch = rootNodes.find(n => n.status === "active");
-    const totalBranches = rootNodes.length || 3;
-    const progressLine = `Progress: Phase ${completedBranches + 1} of ${totalBranches}${activeBranch ? `: ${activeBranch.title}` : ""}`;
+    const activeChild = allNodes.find(n => n.parentNodeId && n.status === "active");
 
-    await ctx.reply(
-      `📊 *Status*\n\n` +
-      `Archetype: ${(user.archetype || "").replace(/-/g, " ")}\n` +
-      `Trial: ${user.trialStatus} (day ${dayNum})\n` +
-      `Streak: ${user.currentStreak} 🔥\n` +
-      progressLine,
-      { parse_mode: "Markdown" }
-    );
+    const archetype = (user.archetype || "unknown").replace(/-/g, " ");
+    const branchLine = activeBranch
+      ? `🌟 ${activeBranch.title}${activeChild ? ` → ${activeChild.title}` : ""}`
+      : "🌟 No active branch";
+
+    // Trial scoreboard
+    let trialLine = "";
+    if (user.trialStartDate && user.trialStatus === "active") {
+      const dayNum = getTrialDayNumber(user.trialStartDate);
+      const trialStart = user.trialStartDate;
+      const trialTasks = await db.select().from(dailyTasks).where(
+        and(eq(dailyTasks.userId, user.id), gte(dailyTasks.assignedDate, trialStart))
+      );
+
+      const icons = [];
+      for (let d = 0; d < 7; d++) {
+        const date = new Date(new Date(trialStart).getTime() + d * 24 * 60 * 60 * 1000);
+        const dateStr = date.toISOString().split("T")[0];
+        const task = trialTasks.find(t => t.assignedDate === dateStr);
+        if (!task) icons.push("⬜");
+        else if (task.status === "completed") icons.push("✅");
+        else if (task.status === "missed") icons.push("❌");
+        else if (task.status === "skipped") icons.push("⏭");
+        else icons.push("⏳");
+      }
+      const completed = icons.filter(i => i === "✅").length;
+      trialLine = `📅 Trial: Day ${dayNum} of 7\n   ${icons.join("")}  (${completed}/5 needed)`;
+    } else if (user.trialStatus === "passed") {
+      trialLine = "📅 Trial: passed ✓";
+    } else {
+      trialLine = `📅 Trial: ${user.trialStatus}`;
+    }
+
+    // Today's task
+    const today = new Date().toISOString().split("T")[0] as string;
+    const [todayTask] = await db.select().from(dailyTasks)
+      .where(and(eq(dailyTasks.userId, user.id), eq(dailyTasks.assignedDate, today)))
+      .limit(1);
+
+    const statusIcon = (s: string) => ({ completed: "✅", missed: "❌", skipped: "⏭", assigned: "⏳" }[s] || "⬜");
+    const truncate = (s: string, n: number) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+
+    let todayLine = "📋 Today: no task yet";
+    if (todayTask) {
+      todayLine = `📋 Today: ${statusIcon(todayTask.status)} ${todayTask.status}\n   "${truncate(todayTask.taskText, 80)}"`;
+    }
+
+    // Last 7 days
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0] as string;
+    const recentTasks = await db.select().from(dailyTasks)
+      .where(and(eq(dailyTasks.userId, user.id), gte(dailyTasks.assignedDate, sevenDaysAgo)))
+      .orderBy(desc(dailyTasks.assignedDate))
+      .limit(7);
+
+    const historyLines = recentTasks.map(t => {
+      const d = new Date(t.assignedDate + "T00:00:00Z");
+      const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
+      return `   ${label}: ${statusIcon(t.status)} "${truncate(t.taskText, 50)}"`;
+    });
+
+    const msg = [
+      "📊 Status\n",
+      `🎭 ${archetype}`,
+      branchLine,
+      "",
+      trialLine,
+      "",
+      `🔥 Streak: ${user.currentStreak}`,
+      "",
+      todayLine,
+      "",
+      historyLines.length > 0 ? `📜 Last 7 days:\n${historyLines.join("\n")}` : "📜 No task history yet",
+    ].join("\n");
+
+    await ctx.reply(msg);
   });
 
   // Callbacks (inline keyboard buttons)
