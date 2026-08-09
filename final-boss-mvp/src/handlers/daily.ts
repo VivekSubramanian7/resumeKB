@@ -2,60 +2,74 @@ import type { Context } from "grammy";
 import { InlineKeyboard } from "grammy";
 import { getOrCreateUser } from "../services/onboarding.js";
 import { getTodayTask, completeTask } from "../services/tasks.js";
+import { db } from "../db/client.js";
+import { journalEntries } from "../db/schema.js";
 
-export async function handleDailyMessage(ctx: Context) {
-  if (!ctx.message?.text || !ctx.from) return;
+// ponytail: in-memory per-process; fine for single-instance MVP
+const pendingReflection = new Map<number, string>();
+
+function isCompletionSignal(text: string): boolean {
+  const lower = text.toLowerCase().trim();
+  return lower === "done" || lower === "completed" || lower === "✅";
+}
+
+export async function handleDailyMessage(ctx: Context): Promise<boolean> {
+  if (!ctx.message?.text || !ctx.from) return false;
 
   const user = await getOrCreateUser(ctx.from.id);
-  if (user.onboardingStatus !== "complete") return false; // not for us
+  if (user.onboardingStatus !== "complete") return false;
 
-  const text = ctx.message.text.toLowerCase().trim();
-  const task = await getTodayTask(user.id);
+  const text = ctx.message.text.trim();
+  const lower = text.toLowerCase();
 
-  if (!task) {
-    await ctx.reply("No task assigned yet today. It'll arrive in the morning.");
-    return true;
-  }
-
-  if (task.status === "completed") {
-    await ctx.reply("You already completed today's task. Rest up, tomorrow brings a new challenge.");
-    return true;
-  }
-
-  // Check for completion signals
-  if (text === "done" || text === "completed" || text === "✅") {
-    await ctx.reply("Nice. Any quick reflection? What did you notice? (or send 'skip' to skip)");
-    return true;
-  }
-
-  if (text === "skip") {
+  // Skip signal — complete task without reflection
+  if (lower === "skip") {
+    const task = await getTodayTask(user.id);
+    if (!task || task.status === "completed") {
+      await ctx.reply("No pending task to skip.");
+      return true;
+    }
+    pendingReflection.delete(ctx.from.id);
     const result = await completeTask(task.id);
     const newStreak = result?.newStreak ?? 1;
     await ctx.reply(`✅ Day logged. Streak: ${newStreak} 🔥`);
     return true;
   }
 
-  // If task is assigned and they send text, treat it as reflection for completion
-  if (task.status === "assigned") {
-    // Check if this looks like a reflection (they said "done" previously, now giving reflection)
-    // Simple heuristic: if it's not a question or command, treat as reflection
-    if (text.length > 5 && !text.startsWith("/")) {
-      const result = await completeTask(task.id, ctx.message.text);
-      const newStreak = result?.newStreak ?? 1;
-      await ctx.reply(`✅ Logged with reflection. Streak: ${newStreak} 🔥\n\nSee you tonight for the check-in.`);
+  // Completion signal — set pending reflection
+  if (isCompletionSignal(text)) {
+    const task = await getTodayTask(user.id);
+    if (!task) {
+      await ctx.reply("No task assigned yet today. It'll arrive in the morning.");
       return true;
     }
+    if (task.status === "completed") {
+      await ctx.reply("You already completed today's task. Rest up, tomorrow brings a new challenge.");
+      return true;
+    }
+    pendingReflection.set(ctx.from.id, task.id);
+    await ctx.reply("Nice. Any quick reflection? What did you notice? (or send 'skip' to skip)");
+    return true;
   }
 
-  // Show current task status
-  const keyboard = new InlineKeyboard()
-    .text("✅ Done", `complete_task:${task.id}`)
-    .text("⏭ Skip", `skip_task:${task.id}`);
+  // If pending reflection — store as reflection and complete
+  const pendingTaskId = pendingReflection.get(ctx.from.id);
+  if (pendingTaskId) {
+    pendingReflection.delete(ctx.from.id);
+    const result = await completeTask(pendingTaskId, text);
+    const newStreak = result?.newStreak ?? 1;
+    await ctx.reply(`✅ Logged with reflection. Streak: ${newStreak} 🔥\n\nSee you tonight for the check-in.`);
+    return true;
+  }
 
-  await ctx.reply(`Today's task:\n\n*${task.taskText}*\n\nReply "done" when finished (+ optional reflection), or tap below:`, {
-    parse_mode: "Markdown",
-    reply_markup: keyboard,
+  // Commands should not be journaled
+  if (text.startsWith("/")) return false;
+
+  // Everything else → journal entry
+  await db.insert(journalEntries).values({
+    userId: user.id,
+    content: text,
   });
-
+  await ctx.reply("📓 Noted.");
   return true;
 }
