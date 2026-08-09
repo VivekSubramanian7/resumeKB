@@ -126,8 +126,9 @@ export function createBot() {
       .where(and(eq(dailyTasks.userId, user.id), gte(dailyTasks.assignedDate, sevenDaysAgo)))
       .orderBy(desc(dailyTasks.assignedDate))
       .limit(7);
+    const filteredRecentTasks = recentTasks.filter(t => t.assignedDate !== today);
 
-    const historyLines = recentTasks.map(t => {
+    const historyLines = filteredRecentTasks.map(t => {
       const d = new Date(t.assignedDate + "T00:00:00Z");
       const label = d.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
       return `   ${label}: ${statusIcon(t.status)} "${truncate(t.taskText, 50)}"`;
