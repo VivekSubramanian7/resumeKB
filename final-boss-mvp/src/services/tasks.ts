@@ -1,6 +1,6 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, gte, isNotNull } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { dailyTasks, skillNodes, users } from "../db/schema.js";
+import { dailyTasks, skillNodes, users, journalEntries } from "../db/schema.js";
 import * as ai from "./ai.js";
 import { getUserAIConfigByUserId } from "./llmSettings.js";
 import { taskGenerationSystem } from "../prompts/coach.js";
@@ -44,6 +44,37 @@ export async function generateDailyTask(userId: string) {
     .join("; ")
     .slice(0, 500); // cap length
 
+  // Query recent journal signals (last 5 days) for psychological context
+  const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+  const recentSignals = await db.select({ signals: journalEntries.signals })
+    .from(journalEntries)
+    .where(and(
+      eq(journalEntries.userId, userId),
+      gte(journalEntries.createdAt, fiveDaysAgo),
+      isNotNull(journalEntries.signals),
+    ))
+    .orderBy(desc(journalEntries.createdAt))
+    .limit(20);
+
+  let journalContext: string | undefined;
+  if (recentSignals.length > 0) {
+    const allEmotions = new Set<string>();
+    const allThemes = new Set<string>();
+    const allObstacles = new Set<string>();
+    for (const row of recentSignals) {
+      if (row.signals) {
+        row.signals.emotions?.forEach(e => allEmotions.add(e));
+        row.signals.themes?.forEach(t => allThemes.add(t));
+        row.signals.obstacles?.forEach(o => allObstacles.add(o));
+      }
+    }
+    const parts: string[] = [];
+    if (allEmotions.size > 0) parts.push(`- Recent emotions: ${[...allEmotions].slice(0, 5).join(", ")}`);
+    if (allThemes.size > 0) parts.push(`- Recurring themes: ${[...allThemes].slice(0, 5).join(", ")}`);
+    if (allObstacles.size > 0) parts.push(`- Obstacles surfaced: ${[...allObstacles].slice(0, 5).join(", ")}`);
+    if (parts.length > 0) journalContext = parts.join("\n");
+  }
+
   const system = taskGenerationSystem({
     archetype: user.archetype ?? "disciplined-achiever",
     nodeTitle: activeNode.title,
@@ -53,6 +84,7 @@ export async function generateDailyTask(userId: string) {
     finalBossDescription: user.finalBossDescription ?? "",
     currentSelfDescription: user.currentSelfDescription ?? "",
     keyStruggles,
+    journalContext,
   });
 
   const userConfig = await getUserAIConfigByUserId(userId);

@@ -8,24 +8,36 @@ export function taskGenerationSystem(context: {
   finalBossDescription: string;
   currentSelfDescription: string;
   keyStruggles: string; // extracted from clarifyingAnswers
+  journalContext?: string;
 }) {
+  const journalSection = context.journalContext
+    ? `\n\nRECENT PSYCHOLOGICAL CONTEXT (from user's journal, last few days):
+${context.journalContext}
+
+Use this to calibrate the TONE and APPROACH of today's task:
+- If the user is anxious or stressed, make the task gentler and more approachable
+- If the user is energized or motivated, push slightly harder
+- If they're wrestling with a specific obstacle, frame the task to address it indirectly
+DO NOT change the task's direction or skill node focus. The goal stays the same.`
+    : "";
+
   return `You are the Coach for Final Boss. Generate ONE daily micro-task.
 
 Context:
 - User's archetype: ${context.archetype}
-- Active growth area: "${context.nodeTitle}"  - ${context.nodeDescription}
+- Active growth area: "${context.nodeTitle}" - ${context.nodeDescription}
 - Day ${context.dayNumber} of this branch
 - Recent tasks: ${context.recentTasks.join("; ") || "None yet"}
 - Their vision: ${context.finalBossDescription}
 - Where they are now: ${context.currentSelfDescription}
-- Key struggles: ${context.keyStruggles}
+- Key struggles: ${context.keyStruggles}${journalSection}
 
 Rules:
 - Task takes 15-30 minutes
 - Be specific and actionable
 - Vary types: action (do something), reflection (think deeply), social (interact), observation (notice patterns)
 - Day 1-3: easier. Day 4-7: progressively harder.
-- This is Telegram  - keep the task description under 2 sentences.
+- This is Telegram - keep the task description under 2 sentences.
 - The task MUST directly address the user's stated struggles or goals. No generic self-help. Reference their specific situation.
 
 Return JSON:
