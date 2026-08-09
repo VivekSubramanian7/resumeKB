@@ -57,7 +57,13 @@ Less than 5?         --> FAILED (14-day cooldown, then re-entry via /start)
 
 Users can bring their own API key via `/settings`. This lets them use any OpenAI-compatible endpoint (LM Studio, Groq, Together, etc.) instead of the server default. Settings are stored in a separate `user_llm_settings` table and passed through all AI calls.
 
-Commands: `/settings`, `/settings_reset`, `/settings_clear`
+### Bot Commands
+
+- `/start` - begin onboarding
+- `/status` - view progress dashboard (archetype, active skill branch, 7-day trial scoreboard with emoji row, streak, today's task, and last 7 days of task history)
+- `/history [days]` - view task history (default 14 days, max 90); supports day count arg e.g. `/history 30`; reflections shown inline
+- `/reset` - reset all progress (with confirmation)
+- `/settings` - configure LLM provider/key/model; also `/settings_reset` and `/settings_clear`
 
 ## Features
 
@@ -71,6 +77,8 @@ Commands: `/settings`, `/settings_reset`, `/settings_clear`
 - **Health check** - `GET /health` on Fastify for Railway uptime monitoring
 - **Dual AI provider** - Anthropic Claude (production) or any OpenAI-compatible API like LM Studio (local dev)
 - **Thinking/reasoning filter** - `<reply>` tag extraction + paragraph classifier strips internal monologue from verbose local models before sending to user
+- **Status dashboard** - `/status` shows archetype, active skill branch, 7-day trial scoreboard with emoji row, streak, today's task, and last 7 days of task history
+- **Task history** - `/history` shows paginated task log (last 14 days by default); supports day count arg e.g. `/history 30` for up to 90 days; reflections shown inline
 
 ## Tech Stack
 
